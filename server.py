@@ -2,6 +2,7 @@ import threading
 
 
 COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
+PORT = 31597
 
 
 class Room:
@@ -18,4 +19,5 @@ class Player:
         self.socket = socket
 
 
-
+def accept_tcp_connection():
+    pass
