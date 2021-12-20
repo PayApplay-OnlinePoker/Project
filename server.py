@@ -18,4 +18,5 @@ class Player:
         self.socket = socket
 
 
-
+def accept_tcp_connection():
+    pass
