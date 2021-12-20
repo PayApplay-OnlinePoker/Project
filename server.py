@@ -1,8 +1,10 @@
 import threading
+import socket
 
 
 COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
 PORT = 31597
+MAX_USERS = 100
 
 
 class Room:
@@ -22,4 +24,6 @@ class Player:
 
 
 def accept_tcp_connection():
-    pass
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
+        serverSocket.bind(('localhost', PORT))
+        serverSocket.listen()
