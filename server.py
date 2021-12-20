@@ -2,6 +2,7 @@ import threading
 
 
 COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
+PORT = 31597
 
 
 class Room:
