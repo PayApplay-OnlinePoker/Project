@@ -78,7 +78,7 @@
     * roomID
         * roomPW
 * create
-    * roomID
+    * roomName
         * roomPW
             * baseBetting
                 * baseMoney
