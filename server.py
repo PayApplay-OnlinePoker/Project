@@ -1,4 +1,8 @@
+import threading
+
+
 COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
+
 
 class Room:
     def __init__(self, roomName, roomPW, baseBetting, baseMoney, host):
@@ -12,4 +16,6 @@ class Player:
     def __init__(self, nickname, socket):
         self.nickname = nickname
         self.socket = socket
+
+
 
