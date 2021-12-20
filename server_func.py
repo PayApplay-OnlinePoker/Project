@@ -27,22 +27,22 @@ class bet:
         pass
 
 
-def drawCard(card, isHidden):
+def draw_card(card, isHidden):
     pass
 
-def removeCard(card):
+def remove_card(card):
     pass
 
-def openCard(card):
+def open_card(card):
     pass
 
-def startGame():
+def start_game():
     pass
 
-def checkUserMoney(userID, money):
+def check_user_money(userID, money):
     pass
 
-def checkTableMoney(money):
+def check_table_money(money):
     pass
 
 def winner(userID, nickname):
