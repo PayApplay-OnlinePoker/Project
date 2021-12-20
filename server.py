@@ -10,6 +10,6 @@ class Room:
 
 class Player:
     def __init__(self, nickname, socket):
-        this.nickname = nickname
-        this.socket = socket
+        self.nickname = nickname
+        self.socket = socket
 
