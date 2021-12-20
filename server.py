@@ -12,6 +12,7 @@ class Room:
         self.baseBetting = baseBetting
         self.baseMoney = baseMoney
         self.host = host
+        self.userList = [host]
 
 class Player:
     def __init__(self, nickname, socket):
