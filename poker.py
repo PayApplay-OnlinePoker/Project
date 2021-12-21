@@ -10,7 +10,7 @@ HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", 
 
 class CheckVal(self):
     def check_winner(ID, nickname):
-    pass 
+        pass 
 
 class Gameplay:
     def __init__(self):
