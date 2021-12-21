@@ -8,11 +8,42 @@ import random
 HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", "BSF", "RSF"]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
 
-class CheckVal:
-    def check_winner(self,ID, nickname):
+class Apicall:
+    def join(self, roomID, roomPW):
         pass
 
-class Gameplay(CheckVal):
+    def create(self, roomName, roomPW, baseBetting, baseMoney):
+        pass
+
+    def leave(self):
+        pass
+
+    def bet(self, check, call, allin, half, quarter, fold, money):
+        pass
+
+    def drawCard(self, card, isHidden):
+        pass
+
+    def removeCard(self, card):
+        pass
+
+    def openCard(self, card):
+        pass
+
+    def startGame(self):
+        pass
+
+    def checkUserMoney(self, money):
+        pass
+
+    def checkTableMoney(self, money):
+        pass
+
+    def winner(ID, nickname):
+        pass
+
+
+class Gameplay:
     def __init__(self):
         self.generate_deck()
 
@@ -30,19 +61,3 @@ class Gameplay(CheckVal):
     def calculate_ranking(self): #hand-ranking
         global HAND_RANKING
         pass
-
-
-
-
-
-
-
-
-
-
-
-'''
-test = Gameplay()
-for i in range(52):
-    print(test.card_draw())
-'''
