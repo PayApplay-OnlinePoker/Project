@@ -26,7 +26,7 @@ class Gameplay(CheckVal):
         drawCard = random.choice(self.deck)
         self.deck.remove(drawCard)
         return drawCard
-    
+
     def calculate_ranking(self): #hand-ranking
         global HAND_RANKING
         pass
