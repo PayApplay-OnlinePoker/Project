@@ -64,7 +64,6 @@ class Gameplay:
         global HAND_RANKING
         pass
 
-
 def number_to_card(number):
     if number in range(1, 14): #Spade
         this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
