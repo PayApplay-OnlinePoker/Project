@@ -1,8 +1,10 @@
 import threading
+import socket
 
 
 COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
 PORT = 31597
+MAX_USERS = 100
 
 
 class Room:
@@ -20,6 +22,32 @@ class Player:
         self.nickname = nickname
         self.socket = socket
 
+class PlayerHandler:
+    def __init__(self):
+        self.players = []
+        self.playerCount = 0
 
-def accept_tcp_connection():
-    pass
+
+playerHandler = PlayerHandler()
+
+
+def listen_tcp_connection():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
+        serverSocket.bind(('localhost', PORT))
+        serverSocket.listen(MAX_USERS)
+        while True:
+            accept_tcp_connection(serverSocket)
+
+def accept_tcp_connection(serverSocket):
+    newConnection, newConnectionAddr = serverSocket.accept()
+    newThread = threading.Thread(target=listen_client_message, args=(newConnection, newConnectionAddr))
+    newThread.start()
+
+def listen_client_message(newConnection, newConnectionAddr):
+    while True:
+        clientMessage = newConnection.recv(2048).split()
+        callerID = clientMessage[0]
+        destinationID = clientMessage[1]
+        command = clientMessage[2]
+        args = clientMessage[3:]
+
