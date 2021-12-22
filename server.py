@@ -36,7 +36,10 @@ class PlayerHandler:
         time.sleep(0.05)
     def enqueue_message(self, destinationID, message):
         if destinationID in self.players.keys():
-             self.players[destinationID].messageQueue.append(message)
+            self.players[destinationID].messageQueue.append(message)
+            return True
+        else:
+            return False
 
 
 playerHandler = PlayerHandler()
@@ -62,4 +65,11 @@ def listen_client_message(newConnection, newConnectionAddr):
         destinationID = clientMessage[1]
         command = clientMessage[2]
         args = clientMessage[3:]
+        if destinationID != 0:
+            if playerHandler.enqueue_message(destinationID, clientMessage):
+                enqueue_message(callerID, f'0 {callerID} ack sent {clientMessage}')
+            else:
+                enqueue_message(callerID, f'0 {callerID} ack noSuchID {clientMessage}')
+        else:
+            pass #Server API handle
 
