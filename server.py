@@ -1,5 +1,6 @@
 import threading
 import socket
+import time
 
 
 COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
@@ -18,14 +19,21 @@ class Room:
         self.tableMoney = 0
 
 class Player:
-    def __init__(self, nickname, socket):
+    def __init__(self, nickname, socket, ID):
         self.nickname = nickname
         self.socket = socket
+        self.messageQueue = []
+        self.playerID = ID
 
 class PlayerHandler:
     def __init__(self):
         self.players = []
         self.playerCount = 0
+    def send_message_to_players(self):
+        for i in self.players:
+            if len(i.messageQueue) > 0:
+                i.socket.send(i.messageQueue.pop(0))
+        time.sleep(0.05)
 
 
 playerHandler = PlayerHandler()
@@ -44,6 +52,7 @@ def accept_tcp_connection(serverSocket):
     newThread.start()
 
 def listen_client_message(newConnection, newConnectionAddr):
+    playerID = -1
     while True:
         clientMessage = newConnection.recv(2048).split()
         callerID = clientMessage[0]
