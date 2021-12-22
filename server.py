@@ -1,11 +1,13 @@
 import threading
 import socket
 import time
+import random
 
 
-COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner']
+COMMANDS = ['join', 'create', 'leave', 'bet', 'drawCard', 'removeCard', 'openCard', 'startGame', 'checkUserMoney', 'checkTableMoney', 'winner', 'ack']
 PORT = 31597
 MAX_USERS = 100
+MAX_RANGE = 65535
 
 
 class Room:
@@ -17,6 +19,7 @@ class Room:
         self.host = host
         self.userList = [host]
         self.tableMoney = 0
+        self.gameHandler = None
 
 class Player:
     def __init__(self, nickname, socket, ID):
@@ -24,6 +27,7 @@ class Player:
         self.socket = socket
         self.messageQueue = []
         self.playerID = ID
+        self.money = 0
 
 class PlayerHandler:
     def __init__(self):
@@ -41,9 +45,52 @@ class PlayerHandler:
         else:
             return False
 
+class RoomHandler:
+    def __init__(self):
+        self.rooms = dict()
 
+    def join(self, userID, roomID, roomPW):
+        if roomID in self.rooms.keys():
+            if roomPW == self.rooms[roomID].roomPW:
+                if len(self.userList) < 4:
+                    self.userList.append(userID)
+                    playerHandler.players[userID].money = self.rooms[roomID].baseMoney
+
+                else:
+                    self.playerHandler.enqueue_message(userID, f'0 {userID} ack roomIsFull')
+            else:
+                self.playerHandler.enqueue_message(userID, f'0 {userID} ack passwordNotMatched')
+        else:
+            self.playerHandler.enqueue_message(userID, f'0 {userID} ack noSuchRoomID')
+
+    def create(self, userID, roomName, roomPW, baseBetting, baseMoney):
+        roomID = random.randint(1, 65536)
+        while roomID not in self.rooms.keys():
+           roomID = random.randint(1, 65536)
+        self.rooms[roomID] = Room(roomName, roomPW, baseBetting, baseMoney, userID)
+
+    def leave(self, userID, roomID):
+            if userID in self.rooms[roomID].userList:
+                del self.rooms[roomID].userList[userID]
+
+class GameHandler:
+    def start_game(self, roomID):
+        #1.userlist에 있는 유저들의 money에서 baseBetting만큼의 수를 뺀다.
+        #2.뺀 만큼의 돈을 tableMoney에 더한다.
+        #3.게임을 시작한다.
+        for userID in RoomHandler.rooms[roomID].userList
+            playerHandler.players[userID].money -= RoomHandler.rooms[roomID].baseBetting
+            RoomHandler.rooms[roomID].tableMoney += baseBetting
+    def end_game():
+        #1. winner를 정한다.
+        #2 winner.money에 tablemoney를 더한다.
+        #3. baseBetting > money 인 유저들을 전부 킥 한다.
+
+
+
+gameHandler = GameHandler()
+roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
-
 
 def listen_tcp_connection():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
@@ -61,9 +108,9 @@ def listen_client_message(newConnection, newConnectionAddr):
     playerID = -1
     while True:
         clientMessage = newConnection.recv(2048).split()
-        callerID = clientMessage[0]
-        destinationID = clientMessage[1]
-        command = clientMessage[2]
+        callerID = int(clientMessage[0])
+        destinationID = int(clientMessage[1])
+        clientCommand = clientMessage[2]
         args = clientMessage[3:]
         if destinationID != 0:
             if playerHandler.enqueue_message(destinationID, clientMessage):
@@ -71,5 +118,14 @@ def listen_client_message(newConnection, newConnectionAddr):
             else:
                 enqueue_message(callerID, f'0 {callerID} ack noSuchID {clientMessage}')
         else:
-            pass #Server API handle
+            if callerID in playerHandler.players.keys():
+
+            elif callerID == -1:
+
+
+
+
+
+
+
 
