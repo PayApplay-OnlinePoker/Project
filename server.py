@@ -27,13 +27,16 @@ class Player:
 
 class PlayerHandler:
     def __init__(self):
-        self.players = []
+        self.players = dict()
         self.playerCount = 0
     def send_message_to_players(self):
         for i in self.players:
             if len(i.messageQueue) > 0:
                 i.socket.send(i.messageQueue.pop(0))
         time.sleep(0.05)
+    def enqueue_message(self, destinationID, message):
+        if destinationID in self.players.keys():
+             self.players[destinationID].messageQueue.append(message)
 
 
 playerHandler = PlayerHandler()
