@@ -5,10 +5,18 @@
 #S-H-D-C
 
 import random
+import socket
+import time
+import threading
+
+
 HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", "BSF", "RSF"]
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
+SERVER_ADDR = ''
+PORT = 31597
+
 
 class Apicall:
     def join(self, roomID, roomPW):
@@ -41,7 +49,10 @@ class Apicall:
     def checkTableMoney(self, money):
         pass
 
-    def winner(ID, nickname):
+    def winner(self, ID, nickname):
+        pass
+
+    def register(self, nickname):
         pass
 
 
@@ -82,6 +93,27 @@ def print_player_hand():
     global playerHand
     print("지금 가지고 계신 패는",  ','.join(playerHand) ,'입니다.')
 
+class ClientSocket:
+    def __init__(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(SERVER_ADDR, PORT)
+        self.sendMessageQueue = []
+        self.receiveMessageQueue = []
+    def listen_server_message(self):
+        while True:
+            serverMessage = self.socket.recv(2048)
+            self.receiveMessageQueue.append(serverMessage)
+    def send_server_message(self):
+        while True:
+            if len(sendMessageQueue) > 0:
+                self.socket.send(sendMessageQueue.pop(0))
+            time.sleep(0.1)
+
+clientSocket = ClientSocket()
+tempThread = threading.Thread(target=clientSocket.listen_server_message)
+tempThread.start()
+tempThread = threading.Thread(target=clientSocket.send_server_message)
+tempThread.start()
 
 #4장을 준다
 test = Gameplay()
