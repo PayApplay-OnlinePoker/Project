@@ -18,12 +18,15 @@ SERVER_ADDR = ''
 PORT = 31597
 
 
+id = -1
+
+
 class Apicall:
     def join(self, roomID, roomPW):
         pass
 
     def create(self, roomName, roomPW, baseBetting, baseMoney):
-        pass
+        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}'
 
     def leave(self):
         pass
@@ -53,7 +56,7 @@ class Apicall:
         pass
 
     def register(self, nickname):
-        pass
+        clientSocket.sendMessageQueue.append("")
 
 
 class Gameplay:
@@ -99,6 +102,9 @@ class ClientSocket:
         self.socket.connect(SERVER_ADDR, PORT)
         self.sendMessageQueue = []
         self.receiveMessageQueue = []
+        self.sentMessageQueue = []
+        self.receivedAcks = []
+        self.receivedCommands = []
     def listen_server_message(self):
         while True:
             serverMessage = self.socket.recv(2048)
@@ -106,7 +112,20 @@ class ClientSocket:
     def send_server_message(self):
         while True:
             if len(self.sendMessageQueue) > 0:
-                self.socket.send(self.sendMessageQueue.pop(0))
+                message = str(self.sendMessageQueue.pop(0))
+                self.socket.send(message.encode())
+                self.sentMessageQueue.append(message)
+            time.sleep(0.1)
+    def sort_received_messages(self):
+        while True:
+            if len(self.receiveMessageQueue) > 0:
+                message = str(receiveMessageQueue.pop(0))
+                messageList = message.split()
+                command = messageList[2]
+                if command is 'ack':
+                    self.receivedAcks.append(message)
+                else:
+                    self.receivedCommands.append(message)
             time.sleep(0.1)
 
 clientSocket = ClientSocket()
