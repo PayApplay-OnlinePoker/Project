@@ -8,7 +8,9 @@ import random
 HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", "BSF", "RSF"]
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 CARD_PATTEN = ["S", "H", "D", "C"]
+CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
+handCardList = [int(0) for i in range(17) ]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
 
 class Apicall:
@@ -65,29 +67,169 @@ class Gameplay:
         global HAND_RANKING
         pass
 
+def HandRankingReturn(handCardList):
+    global CARD_PATTEN
+    royalStraightFlushCheck = 0
+    backStraightFlushCheck = 0
+    straightFlushCheck = 0
+    fourCheck = 0
+    flushCheck = 0
+    flushList = []
+    mountainCheck = 0
+    backStraightCheck = 0
+    straightCheck = 0
+    startStraightNum = 0
+    tokCheck = 0
+    pairCheck = 0
+
+
+
+    #Flush
+    for idx, cardPatten in enumerate(handCardList[13: ]): 
+        if cardPatten >= 5:
+            flushCheck += 1
+            flushPatten = CARD_PATTEN[idx]
+            for idx, listPatten in enumerate(playerHandPatten):
+                if listPatten == flushPatten:
+                    flushList.append(str(playerHandNum[idx]))
+        flushList.sort()
+    #Mountain
+    if handCardList[0] >= 1 and handCardList[9] >= 1 and handCardList[10] >= 1 and handCardList[11] >= 1 and handCardList[12] >= 1 :
+        mountainCheck += 1
+
+    #BackStraight
+    elif handCardList[0] >= 1 and handCardList[1] >= 1 and handCardList[2] >= 1 and handCardList[3] >= 1 and handCardList[4] >= 1 :
+        backStraightCheck += 1  
+
+    #Straight
+    else:
+        for straightNum in range(10):
+            if handCardList[straightNum] >= 1 and handCardList[straightNum + 1] >= 1 and handCardList[straightNum + 2] >= 1 and handCardList[straightNum + 3] >= 1 and handCardList[straightNum + 4] >= 1:
+                straightCheck += 1
+                temp = straightNum
+                if startStraightNum < temp:
+                    startStraightNum = temp
+            straightList = [str(startStraightNum + i) for i in range(5)]
+            straightList.sort()
+
+
+
+    #royalStraightFlush
+    if mountainCheck >= 1 and flushCheck >= 1:
+        if ["1", "10", "11", "12", "13"] == flushList:
+            royalStraightFlushCheck += 1 
+
+    #backStraightFlush
+    if backStraightCheck >= 1 and flushCheck >= 1:
+        if ["1", "2", "3", "4", "5"] == flushList:
+            backStraightCheck += 1
+
+    #StraightFlush
+    if straightCheck >= 1 and flushCheck >= 1:
+        if straightList == flushList:
+            straightFlushCheck += 1
+
+
+    for idx, cardCount in enumerate(handCardList[0:13]): #Onepair, Twopair, FullHouse, FourCard
+        if cardCount == 2:
+            pairCheck += 1
+
+        if cardCount == 3:
+            tokCheck += 1
+        
+        if cardCount == 4:
+            fourCheck += 1
+            
+    for idx, temp in enumerate(playerHandNum):
+        pass
+
+
+
+    #return ["랭크", "하이카드", "무늬"]
+
+    if royalStraightFlushCheck >= 1:
+        return "RoyalStraightFlush"
+        
+
+    elif backStraightFlushCheck>= 1:
+        return "backStraightFlush"
+
+    elif straightFlushCheck>= 1:
+        return "straightStraightFlush"
+
+    elif fourCheck >= 1: #FourCard
+        return "FourCard"
+
+    elif (pairCheck >= 1 and tokCheck == 1) or (tokCheck >= 2):#FullHouse
+        return "FullHouse"
+
+    elif flushCheck >= 1: #Flush
+        return "Flush"
+
+    elif mountainCheck >= 1: #mountain
+        return "mountain", "A"
+
+    elif backStraightCheck >= 1: #backstraight
+        return "backStraight"
+
+    elif straightCheck >= 1: #straight
+        return "Straight"
+
+    elif tokCheck == 1: #Three of Kind
+        return "Three of kind(Triple)"
+
+    elif pairCheck >= 2:#TwoPair
+        return "Two Pair"
+
+    elif pairCheck == 1:#OnePair
+        return "One Pair"
+
+    else: #HighCard
+        return "HighCard"
+
+
 def number_to_card(number):
+    global playerHandNum
+    global playerHandPatten
     if number in range(1, 14): #Spade
         this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
+        cardPatten = CARD_PATTEN[0]
+        cardNum = CARD_NUM[number - 1]
+        playerHandNum.append(cardNum)
+        playerHandPatten.append(cardPatten)
         return this_card
     elif number in range(14, 27): #Heart
         this_card = CLIENT_PATTEN[1] + CLIENT_CARD[number - 14]
+        cardPatten = CARD_PATTEN[1]
+        cardNum = CARD_NUM[number - 14]
+        playerHandNum.append(cardNum)
+        playerHandPatten.append(cardPatten)
         return this_card
     elif number in range(27, 40): #Diamond 
         this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
+        cardPatten = CARD_PATTEN[2]
+        cardNum = CARD_NUM[number - 27]
+        playerHandNum.append(cardNum)
+        playerHandPatten.append(cardPatten)
         return this_card
     elif number in range(40, 53): #Clover
         this_card = CLIENT_PATTEN[3] + CLIENT_CARD[number - 40]
+        cardPatten = CARD_PATTEN[3]
+        cardNum = CARD_NUM[number - 40]
+        playerHandNum.append(cardNum)
+        playerHandPatten.append(cardPatten)
         return this_card
 
 def print_player_hand():
-    global clientHand
-    print("지금 가지고 계신 패는",  ','.join(clientHand) ,'입니다.')
+    global playerHand
+    print("지금 가지고 계신 패는",  ','.join(playerHand) ,'입니다.')
 
 
 #4장을 준다
 test = Gameplay()
-clientHand = [] #사용자가 보는 것.
-playerHand = [] #족보 계산용
+playerHand = [] #사용자가 보는 것.
+playerHandNum = [] #핸드의 숫자
+playerHandPatten = []#핸드의 무늬
 #CUI Part
 '''
 일단 서버와의 통신 없이.  CUI만 구현, 이후 통신이 구현 되면 필요한 부분 수정.
@@ -105,7 +247,7 @@ while True:
 
     if joinOrCreate == 1:#create
 
-        print("방을 생성합니다. ")d
+        print("방을 생성합니다. ")
         createRoomName = input("방 제목을 입력해주세요: ")
 
         createRoomPW = input("방 비밀번호를 입력해주세요: ")
@@ -151,34 +293,61 @@ while True:
 
 #초기 패 설정
 for count in range(4): 
-    clientHand.append(number_to_card(test.card_draw()))
+    playerHand.append(number_to_card(test.card_draw()))
 print_player_hand()
 
 #카드 한장 버리기
-print("1:" + clientHand[0], "2:" + clientHand[1], "3:" + clientHand[2], "4:" + clientHand[3])
+print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2], "4:" + playerHand[3])
 removeCard = int(input("버릴 카드를 선택해주세요. : "))
-del clientHand[removeCard - 1]
+del playerHand[removeCard - 1]
+del playerHandNum[removeCard - 1]
+del playerHandPatten[removeCard - 1]
 
 #카드 한장 오픈하기
-print("1:" + clientHand[0], "2:" + clientHand[1], "3:" + clientHand[2])
+print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2])
 
 openCard = int(input("오픈할 카드를 선택해주세요. : "))
-clientHand[openCard -1] = clientHand[openCard - 1] + "(open)"
+playerHand[openCard -1] = playerHand[openCard - 1] + "(open)"
 
-#SWAP
-swap = clientHand[0] 
-clientHand[0] = clientHand[openCard-1]
-clientHand[openCard -1 ] = swap
+#PlayerHandSWAP
+swap = playerHand[0] 
+playerHand[0] = playerHand[openCard-1]
+playerHand[openCard -1 ] = swap
+
+#PlayerHandNumSWAP
+swap = playerHandNum[0] 
+playerHandNum[0] = playerHandNum[openCard-1]
+playerHandNum[openCard -1 ] = swap
+
+#PlayerHandPattenSWAP
+swap = playerHandPatten[0] 
+playerHandPatten[0] = playerHandPatten[openCard-1]
+playerHandPatten[openCard -1 ] = swap
+
 print_player_hand()
 
 #오픈 카드 3장 주기.
 for playTurn in range(4, 7):
-    print(playTurn, "번째 카드입니다.")
-    clientHand.append(number_to_card(test.card_draw()))
-    clientHand[-1] = clientHand[-1] + "(open)"
+    playerHand.append(number_to_card(test.card_draw()))
+    print(playTurn, "번째 카드는", playerHand[-1], "입니다.")
+    playerHand[-1] = playerHand[-1] + "(open)"
     print_player_hand()
 
 #히든 카드 1장 주기.
 print("7번째 카드 입니다.")
-clientHand.append(number_to_card(test.card_draw()))
+playerHand.append(number_to_card(test.card_draw()))
 print_player_hand()
+
+for i in playerHandNum:
+    handCardList[i - 1] += 1
+for j in playerHandPatten:
+    if j == "S":
+        handCardList[13] += 1
+    elif j == "H":
+        handCardList[14] += 1
+    elif j == "D":
+        handCardList[15] += 1
+    else:
+        handCardList[16] += 1
+
+print("당신의 패는", HandRankingReturn(handCardList), "입니다.")
