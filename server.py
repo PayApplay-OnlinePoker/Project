@@ -72,22 +72,7 @@ class RoomHandler:
     def leave(self, userID, roomID):
             if userID in self.rooms[roomID].userList:
                 del self.rooms[roomID].userList[userID]
-
-class GameHandler:
-    def start_game(self, roomID):
-        #1.userlist에 있는 유저들의 money에서 baseBetting만큼의 수를 뺀다.
-        #2.뺀 만큼의 돈을 tableMoney에 더한다.
-        #3.게임을 시작한다.
-        for userID in RoomHandler.rooms[roomID].userList
-            playerHandler.players[userID].money -= RoomHandler.rooms[roomID].baseBetting
-            RoomHandler.rooms[roomID].tableMoney += baseBetting
-    def end_game():
-        #1. winner를 정한다.
-        #2 winner.money에 tablemoney를 더한다.
-        #3. baseBetting > money 인 유저들을 전부 킥 한다.
-
-
-
+                
 gameHandler = GameHandler()
 roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
