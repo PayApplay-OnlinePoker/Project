@@ -52,16 +52,16 @@ class RoomHandler:
     def join(self, userID, roomID, roomPW):
         if roomID in self.rooms.keys():
             if roomPW == self.rooms[roomID].roomPW:
-                if len(self.userList) < 4:
-                    self.userList.append(userID)
+                if len(self.rooms[roomID].userList) < 4:
+                    self.rooms[roomID].userList.append(userID)
                     playerHandler.players[userID].money = self.rooms[roomID].baseMoney
 
                 else:
-                    self.playerHandler.enqueue_message(userID, f'0 {userID} ack roomIsFull')
+                    playerHandler.enqueue_message(userID, f'0 {userID} ack roomIsFull')
             else:
-                self.playerHandler.enqueue_message(userID, f'0 {userID} ack passwordNotMatched')
+                playerHandler.enqueue_message(userID, f'0 {userID} ack passwordNotMatched')
         else:
-            self.playerHandler.enqueue_message(userID, f'0 {userID} ack noSuchRoomID')
+            playerHandler.enqueue_message(userID, f'0 {userID} ack noSuchRoomID')
 
     def create(self, userID, roomName, roomPW, baseBetting, baseMoney):
         roomID = random.randint(1, 65536)
@@ -72,8 +72,7 @@ class RoomHandler:
     def leave(self, userID, roomID):
             if userID in self.rooms[roomID].userList:
                 del self.rooms[roomID].userList[userID]
-                
-gameHandler = GameHandler()
+
 roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
 
@@ -99,18 +98,13 @@ def listen_client_message(newConnection, newConnectionAddr):
         args = clientMessage[3:]
         if destinationID != 0:
             if playerHandler.enqueue_message(destinationID, clientMessage):
-                enqueue_message(callerID, f'0 {callerID} ack sent {clientMessage}')
+                playerHandler.enqueue_message(callerID, f'0 {callerID} ack sent {clientMessage}')
             else:
-                enqueue_message(callerID, f'0 {callerID} ack noSuchID {clientMessage}')
+                playerHandler.enqueue_message(callerID, f'0 {callerID} ack noSuchID {clientMessage}')
         else:
             if callerID in playerHandler.players.keys():
-
+                pass
             elif callerID == -1:
-
-
-
-
-
-
+                pass
 
 
