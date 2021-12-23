@@ -34,39 +34,48 @@ class PlayerHandler:
         self.players = dict()
         self.playerCount = 0
     def send_message_to_players(self):
-        for i in self.players:
-            if len(i.messageQueue) > 0:
-                i.socket.send(i.messageQueue.pop(0))
-        time.sleep(0.05)
+        while True:
+            for i in self.players:
+                if len(i.messageQueue) > 0:
+                    i.socket.send(i.messageQueue.pop(0))
+            time.sleep(0.05)
     def enqueue_message(self, destinationID, message):
         if destinationID in self.players.keys():
             self.players[destinationID].messageQueue.append(message)
             return True
         else:
             return False
+    def register(self, nickname, socket):
+        newID = random.randint(1, MAX_RANGE)
+        while newID in self.players.keys():
+            newID = random.randint(1, MAX_RANGE)
+        self.players[newID] = Player(nickname, socket, newID)
+        self.enqueue_message(newID, f'0 {newID} ack OK registered {newID}')
+        return newID
 
 class RoomHandler:
     def __init__(self):
         self.rooms = dict()
 
     def join(self, userID, roomID, roomPW):
+        message = f'0 {userID} ack'
         if roomID in self.rooms.keys():
             if roomPW == self.rooms[roomID].roomPW:
                 if len(self.rooms[roomID].userList) < 4:
                     self.rooms[roomID].userList.append(userID)
                     playerHandler.players[userID].money = self.rooms[roomID].baseMoney
-
+                    playerHandler.enqueue_message(userID, message + f'OK joined {roomID}')
                 else:
-                    playerHandler.enqueue_message(userID, f'0 {userID} ack roomIsFull')
+                    playerHandler.enqueue_message(userID, message + 'joinRoomError roomIsFull')
             else:
-                playerHandler.enqueue_message(userID, f'0 {userID} ack passwordNotMatched')
+                playerHandler.enqueue_message(userID, message + 'joinRoomError passwordNotMatched')
         else:
-            playerHandler.enqueue_message(userID, f'0 {userID} ack noSuchRoomID')
+            playerHandler.enqueue_message(userID, message + 'joinRoomError noSuchRoomID')
 
     def create(self, userID, roomName, roomPW, baseBetting, baseMoney):
-        roomID = random.randint(1, 65536)
-        while roomID not in self.rooms.keys():
-           roomID = random.randint(1, 65536)
+        roomID = random.randint(1, MAX_RANGE)
+        while roomID in self.rooms.keys():
+           roomID = random.randint(1, MAX_RANGE)
         self.rooms[roomID] = Room(roomName, roomPW, baseBetting, baseMoney, userID)
 
     def leave(self, userID, roomID):
@@ -75,6 +84,8 @@ class RoomHandler:
 
 roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
+tempThread = threading.Thread(target=playerHandler.send_message_to_players)
+tempThread.start()
 
 def listen_tcp_connection():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSocket:
@@ -96,15 +107,20 @@ def listen_client_message(newConnection, newConnectionAddr):
         destinationID = int(clientMessage[1])
         clientCommand = clientMessage[2]
         args = clientMessage[3:]
+        if callerID != playerID:
+            newConnection.send(f'0 {callerID} ack badRequest callerIDNotMatched')
         if destinationID != 0:
             if playerHandler.enqueue_message(destinationID, clientMessage):
-                playerHandler.enqueue_message(callerID, f'0 {callerID} ack sent {clientMessage}')
+                playerHandler.enqueue_message(callerID, f'0 {callerID} ack OK forwarded {destinationID}')
             else:
-                playerHandler.enqueue_message(callerID, f'0 {callerID} ack noSuchID {clientMessage}')
+                playerHandler.enqueue_message(callerID, f'0 {callerID} ack badRequest noSuchID {destinationID}')
         else:
             if callerID in playerHandler.players.keys():
                 pass
             elif callerID == -1:
-                pass
+                if clientCommand is 'register':
+                    playerID = playerHandler.register(args[0], newConnection)
+                else:
+                    newConnection.send(f'0 -1 ack badRequest wrongCommand')
 
 
