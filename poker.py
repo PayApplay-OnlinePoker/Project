@@ -7,6 +7,7 @@
 import random
 HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", "BSF", "RSF"]
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
+CARD_PATTEN = ["S", "H", "D", "C"]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
 
@@ -79,14 +80,14 @@ def number_to_card(number):
         return this_card
 
 def print_player_hand():
-    global playerHand
-    print("지금 가지고 계신 패는",  ','.join(playerHand) ,'입니다.')
+    global clientHand
+    print("지금 가지고 계신 패는",  ','.join(clientHand) ,'입니다.')
 
 
 #4장을 준다
 test = Gameplay()
-playerHand = []
-
+clientHand = [] #사용자가 보는 것.
+playerHand = [] #족보 계산용
 #CUI Part
 '''
 일단 서버와의 통신 없이.  CUI만 구현, 이후 통신이 구현 되면 필요한 부분 수정.
@@ -104,7 +105,7 @@ while True:
 
     if joinOrCreate == 1:#create
 
-        print("방을 생성합니다. ")
+        print("방을 생성합니다. ")d
         createRoomName = input("방 제목을 입력해주세요: ")
 
         createRoomPW = input("방 비밀번호를 입력해주세요: ")
@@ -150,34 +151,34 @@ while True:
 
 #초기 패 설정
 for count in range(4): 
-    playerHand.append(number_to_card(test.card_draw()))
+    clientHand.append(number_to_card(test.card_draw()))
 print_player_hand()
 
 #카드 한장 버리기
-print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2], "4:" + playerHand[3])
+print("1:" + clientHand[0], "2:" + clientHand[1], "3:" + clientHand[2], "4:" + clientHand[3])
 removeCard = int(input("버릴 카드를 선택해주세요. : "))
-del playerHand[removeCard - 1]
+del clientHand[removeCard - 1]
 
 #카드 한장 오픈하기
-print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2])
+print("1:" + clientHand[0], "2:" + clientHand[1], "3:" + clientHand[2])
 
 openCard = int(input("오픈할 카드를 선택해주세요. : "))
-playerHand[openCard -1] = playerHand[openCard - 1] + "(open)"
+clientHand[openCard -1] = clientHand[openCard - 1] + "(open)"
 
 #SWAP
-swap = playerHand[0] 
-playerHand[0] = playerHand[openCard-1]
-playerHand[openCard -1 ] = swap
+swap = clientHand[0] 
+clientHand[0] = clientHand[openCard-1]
+clientHand[openCard -1 ] = swap
 print_player_hand()
 
 #오픈 카드 3장 주기.
 for playTurn in range(4, 7):
     print(playTurn, "번째 카드입니다.")
-    playerHand.append(number_to_card(test.card_draw()))
-    playerHand[-1] = playerHand[-1] + "(open)"
-print_player_hand()
+    clientHand.append(number_to_card(test.card_draw()))
+    clientHand[-1] = clientHand[-1] + "(open)"
+    print_player_hand()
 
 #히든 카드 1장 주기.
 print("7번째 카드 입니다.")
-playerHand.append(number_to_card(test.card_draw()))
+clientHand.append(number_to_card(test.card_draw()))
 print_player_hand()
