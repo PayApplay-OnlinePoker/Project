@@ -94,7 +94,7 @@
 * drawCard
     * card
         * isHidden
-* removeCard
+* discard
     * card
 * openCard
     * card
@@ -107,17 +107,48 @@
     * ID
         * nickname
 * ack
-    * sent
-        * originalMessage
-    * noSuchID
-        * originalMessage
-    * roomIsFull
-    * passwordNotMatched
-    * noSuchRoomID
-    * registered
-        * ID
     * OK
+        * forwarded
+            * destinationID
+        * registered
+            * ID
+        * joined
+            * roomID
+        * leaved
+            * roomID
+        * betted
+        * created
+            * roomID
+        * cardReceived
+            * ID
+                * cardNumber
+                * -1
+    * badRequest
+        * noSuchID
+            * destinationID
+        * callerIDNotMatched
+            * expectedID
+        * wrongCommand
+    * joinRoomError
+        * noSuchRoomID
+            * roomID
+        * roomIsFull
+            * roomID
+        * passwordNotMatched
+            * roomID
+        * alreadyJoined
+            * requestedRoomID
+                * currentJoinedRoomID
+    * badResponse
+        * unexpectedCommand
+            * command
+        * unexpectedAck
+            * ack
 * register
     * nickname
+* othersCard
+    * ID
+        * cardNumber
+        * -1(hidden)
 ### 서버 구현
 * 포트 : 31597
