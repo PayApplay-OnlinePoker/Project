@@ -105,8 +105,8 @@ class ClientSocket:
             self.receiveMessageQueue.append(serverMessage)
     def send_server_message(self):
         while True:
-            if len(sendMessageQueue) > 0:
-                self.socket.send(sendMessageQueue.pop(0))
+            if len(self.sendMessageQueue) > 0:
+                self.socket.send(self.sendMessageQueue.pop(0))
             time.sleep(0.1)
 
 clientSocket = ClientSocket()
