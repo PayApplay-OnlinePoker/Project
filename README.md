@@ -106,5 +106,10 @@
 * winner
     * ID
         * nickname
+* ack
+    * sent
+        * originalMessage
+    * noSuchID
+        * originalMessage
 ### 서버 구현
 * 포트 : 31597
