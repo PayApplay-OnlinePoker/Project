@@ -111,5 +111,13 @@
         * originalMessage
     * noSuchID
         * originalMessage
+    * roomIsFull
+    * passwordNotMatched
+    * noSuchRoomID
+    * registered
+        * ID
+    * OK
+* register
+    * nickname
 ### 서버 구현
 * 포트 : 31597
