@@ -5,6 +5,11 @@
 #S-H-D-C
 
 import random
+import socket
+import time
+import threading
+
+
 HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", "BSF", "RSF"]
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 CARD_PATTEN = ["S", "H", "D", "C"]
@@ -12,13 +17,19 @@ CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 handCardList = [int(0) for i in range(17) ]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
+SERVER_ADDR = 'onlinepoker.hopto.org'
+PORT = 31597
+
+
+id = -1
+
 
 class Apicall:
     def join(self, roomID, roomPW):
         pass
 
     def create(self, roomName, roomPW, baseBetting, baseMoney):
-        pass
+        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}'
 
     def leave(self):
         pass
@@ -44,8 +55,11 @@ class Apicall:
     def checkTableMoney(self, money):
         pass
 
-    def winner(ID, nickname):
+    def winner(self, ID, nickname):
         pass
+
+    def register(self, nickname):
+        clientSocket.sendMessageQueue.append("")
 
 
 class Gameplay:
@@ -224,6 +238,54 @@ def print_player_hand():
     global playerHand
     print("지금 가지고 계신 패는",  ','.join(playerHand) ,'입니다.')
 
+class ClientSocket:
+    def __init__(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(SERVER_ADDR, PORT)
+        self.sendMessageQueue = []
+        self.receiveMessageQueue = []
+        self.sentMessageQueue = []
+        self.receivedAcks = []
+        self.receivedCommands = []
+    def listen_server_message(self):
+        while True:
+            serverMessage = self.socket.recv(2048)
+            self.receiveMessageQueue.append(serverMessage)
+    def send_server_message(self):
+        while True:
+            if len(self.sendMessageQueue) > 0:
+                message = str(self.sendMessageQueue.pop(0))
+                self.socket.send(message.encode())
+                self.sentMessageQueue.append(message)
+            time.sleep(0.1)
+    def sort_received_messages(self):
+        while True:
+            if len(self.receiveMessageQueue) > 0:
+                message = str(receiveMessageQueue.pop(0))
+                messageList = message.split()
+                command = messageList[2]
+                if command is 'ack':
+                    self.receivedAcks.append(message)
+                else:
+                    self.receivedCommands.append(message)
+            time.sleep(0.1)
+    def handle_ack_messages(self):
+        while True:
+            if len(self.receivedAcks) > 0:
+                message = str(receivedAcks.pop(0))
+                messageList = message.split()
+                if messageList[3] != 'OK':
+                    print(message)
+                #보낸 메시지에서 찾아서 날려야 함.
+
+
+clientSocket = ClientSocket()
+tempThread = threading.Thread(target=clientSocket.listen_server_message)
+tempThread.start()
+tempThread = threading.Thread(target=clientSocket.send_server_message)
+tempThread.start()
+tempThread = threading.Thread(target=clientSocket.sort_received_messages)
+tempThread.start()
 
 #4장을 준다
 test = Gameplay()
