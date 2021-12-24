@@ -127,11 +127,22 @@ class ClientSocket:
                 else:
                     self.receivedCommands.append(message)
             time.sleep(0.1)
+    def handle_ack_messages(self):
+        while True:
+            if len(self.receivedAcks) > 0:
+                message = str(receivedAcks.pop(0))
+                messageList = message.split()
+                if messageList[3] != 'OK':
+                    print(message)
+                #보낸 메시지에서 찾아서 날려야 함.
+
 
 clientSocket = ClientSocket()
 tempThread = threading.Thread(target=clientSocket.listen_server_message)
 tempThread.start()
 tempThread = threading.Thread(target=clientSocket.send_server_message)
+tempThread.start()
+tempThread = threading.Thread(target=clientSocket.sort_received_messages)
 tempThread.start()
 
 #4장을 준다
