@@ -26,7 +26,7 @@ class Apicall:
         pass
 
     def create(self, roomName, roomPW, baseBetting, baseMoney):
-        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}'
+        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}')
 
     def leave(self):
         pass
