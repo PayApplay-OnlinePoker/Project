@@ -102,11 +102,17 @@ def accept_tcp_connection(serverSocket):
 def listen_client_message(newConnection, newConnectionAddr):
     playerID = -1
     while True:
-        clientMessage = newConnection.recv(2048).split()
-        callerID = int(clientMessage[0])
-        destinationID = int(clientMessage[1])
-        clientCommand = clientMessage[2]
-        args = clientMessage[3:]
+        clientMessage = str(newConnection.recv(2048))
+        if clientMessage == '':
+            if playerID != -1:
+                #call leave
+                del(playerHandler.players[playerID])
+                return
+        messageList = clientMessage.split()
+        callerID = int(messageList[0])
+        destinationID = int(messageList[1])
+        clientCommand = messageList[2]
+        args = messageList[3:]
         if callerID != playerID:
             newConnection.send(f'0 {callerID} ack badRequest callerIDNotMatched')
         if destinationID != 0:
