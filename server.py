@@ -85,11 +85,14 @@ class RoomHandler:
         if userID in self.rooms[roomID].userList:
             self.rooms[roomID].userList.remove(userID)
             playerHandler.enqueue_message(userID, f'0 {userID} ack OK leaved {roomID}')
-        self.announce_leave(userID, roomID)
+            self.announce_leave(userID, roomID)
+            playerHandler.players[userID].joinedRoom = 0
+        else:
+            playerHandler.enqueue_message(userID, f'0 {userID} ack leaveRoomError notInThisRoom')
 
     def announce_leave(self, userID, roomID):
         for aUser in self.rooms[roomID].userList:
-            playerHandler.enqueue_message(aUser, 'somewhat a player leave message')#바꿀 것
+            playerHandler.enqueue_message(aUser, f'0 {aUser} leaved {userID}')
 
 roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
@@ -127,14 +130,18 @@ def listen_client_message(newConnection, newConnectionAddr):
         args = messageList[3:]
         if callerID != playerID:
             newConnection.send(f'0 {callerID} ack badRequest callerIDNotMatched')
-        if destinationID != 0:
+        elif destinationID != 0:
             if playerHandler.enqueue_message(destinationID, clientMessage):
                 playerHandler.enqueue_message(callerID, f'0 {callerID} ack OK forwarded {destinationID}')
             else:
                 playerHandler.enqueue_message(callerID, f'0 {callerID} ack badRequest noSuchID {destinationID}')
         else:
             if callerID in playerHandler.players.keys():
-                pass
+                if clientCommand == 'join':
+                    if len(args) == 2:
+                        roomHandler.join(callerID, args[0], args[1])
+                    else:
+                        playerHandler.enqueue_message(callerID, f'0 {callerID} ack badRequest lenArgsNotMatched')
             elif callerID == -1:
                 if clientCommand is 'register':
                     playerID = playerHandler.register(args[0], newConnection)
