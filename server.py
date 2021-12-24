@@ -28,6 +28,7 @@ class Player:
         self.messageQueue = []
         self.playerID = ID
         self.money = 0
+        self.joinedRoom = 0
 
 class PlayerHandler:
     def __init__(self):
@@ -59,6 +60,8 @@ class RoomHandler:
 
     def join(self, userID, roomID, roomPW):
         message = f'0 {userID} ack'
+        if playerHandler.players[userID].joinedRoom != 0:
+            playerHandler.enqueue_message(userID, message + f'joinRoomError alreadyJoined {roomID} {playerHandler.players[userID].joinedRoom}')
         if roomID in self.rooms.keys():
             if roomPW == self.rooms[roomID].roomPW:
                 if len(self.rooms[roomID].userList) < 4:
@@ -79,8 +82,14 @@ class RoomHandler:
         self.rooms[roomID] = Room(roomName, roomPW, baseBetting, baseMoney, userID)
 
     def leave(self, userID, roomID):
-            if userID in self.rooms[roomID].userList:
-                del self.rooms[roomID].userList[userID]
+        if userID in self.rooms[roomID].userList:
+            self.rooms[roomID].userList.remove(userID)
+            playerHandler.enqueue_message(userID, f'0 {userID} ack OK leaved {roomID}')
+        self.announce_leave(userID, roomID)
+
+    def announce_leave(self, userID, roomID):
+        for aUser in self.rooms[roomID].userList:
+            playerHandler.enqueue_message(aUser, 'somewhat a player leave message')#바꿀 것
 
 roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
@@ -105,9 +114,12 @@ def listen_client_message(newConnection, newConnectionAddr):
         clientMessage = str(newConnection.recv(2048))
         if clientMessage == '':
             if playerID != -1:
-                #call leave
+                if playerHandler.players[playerID].joinedRoom != 0:
+                    roomID = playerHandler.players[playerID].joinedRoom
+                    roomHandler.rooms[roomID].userList.remove(playerID)
+                    roomHandler.announce_leave(playerID, roomID)
                 del(playerHandler.players[playerID])
-                return
+            return
         messageList = clientMessage.split()
         callerID = int(messageList[0])
         destinationID = int(messageList[1])
