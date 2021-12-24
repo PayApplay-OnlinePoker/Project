@@ -18,12 +18,15 @@ SERVER_ADDR = ''
 PORT = 31597
 
 
+id = -1
+
+
 class Apicall:
     def join(self, roomID, roomPW):
         pass
 
     def create(self, roomName, roomPW, baseBetting, baseMoney):
-        pass
+        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}'
 
     def leave(self):
         pass
@@ -53,7 +56,7 @@ class Apicall:
         pass
 
     def register(self, nickname):
-        pass
+        clientSocket.sendMessageQueue.append("")
 
 
 class Gameplay:
@@ -99,20 +102,47 @@ class ClientSocket:
         self.socket.connect(SERVER_ADDR, PORT)
         self.sendMessageQueue = []
         self.receiveMessageQueue = []
+        self.sentMessageQueue = []
+        self.receivedAcks = []
+        self.receivedCommands = []
     def listen_server_message(self):
         while True:
             serverMessage = self.socket.recv(2048)
             self.receiveMessageQueue.append(serverMessage)
     def send_server_message(self):
         while True:
-            if len(sendMessageQueue) > 0:
-                self.socket.send(sendMessageQueue.pop(0))
+            if len(self.sendMessageQueue) > 0:
+                message = str(self.sendMessageQueue.pop(0))
+                self.socket.send(message.encode())
+                self.sentMessageQueue.append(message)
             time.sleep(0.1)
+    def sort_received_messages(self):
+        while True:
+            if len(self.receiveMessageQueue) > 0:
+                message = str(receiveMessageQueue.pop(0))
+                messageList = message.split()
+                command = messageList[2]
+                if command is 'ack':
+                    self.receivedAcks.append(message)
+                else:
+                    self.receivedCommands.append(message)
+            time.sleep(0.1)
+    def handle_ack_messages(self):
+        while True:
+            if len(self.receivedAcks) > 0:
+                message = str(receivedAcks.pop(0))
+                messageList = message.split()
+                if messageList[3] != 'OK':
+                    print(message)
+                #보낸 메시지에서 찾아서 날려야 함.
+
 
 clientSocket = ClientSocket()
 tempThread = threading.Thread(target=clientSocket.listen_server_message)
 tempThread.start()
 tempThread = threading.Thread(target=clientSocket.send_server_message)
+tempThread.start()
+tempThread = threading.Thread(target=clientSocket.sort_received_messages)
 tempThread.start()
 
 #4장을 준다
