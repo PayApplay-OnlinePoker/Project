@@ -14,7 +14,7 @@ HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", 
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
-SERVER_ADDR = ''
+SERVER_ADDR = 'onlinepoker.hopto.org'
 PORT = 31597
 
 
