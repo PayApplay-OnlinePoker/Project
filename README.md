@@ -106,23 +106,22 @@
 * winner
     * ID
         * nickname
-* ack
-    * OK
-        * forwarded
-            * destinationID
-        * registered
-            * ID
-        * joined
-            * roomID
-        * leaved
-            * roomID
-        * betted
-        * created
-            * roomID
-        * cardReceived
-            * ID
-                * cardNumber
-                * -1
+* response
+    * forwarded
+        * destinationID
+    * registered
+        * ID
+    * joined
+        * roomID
+    * leaved
+        * roomID
+    * betted
+    * created
+        * roomID
+    * cardReceived
+        * ID
+            * cardNumber
+            * -1
     * badRequest
         * noSuchID
             * destinationID
@@ -144,11 +143,23 @@
             * command
         * unexpectedAck
             * ack
+    * fetch
+        * rooms
+            * start
+            * end
+            * room
+                * roomID
+                    * roomName
+                        * baseBetting
+                            * baseMoney
+                                * hostNickname
 * register
     * nickname
 * othersCard
     * ID
         * cardNumber
         * -1(hidden)
+* fetch
+    * rooms
 ### 서버 구현
 * 포트 : 31597

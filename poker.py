@@ -4,11 +4,15 @@
 # 40 ~ 52 = Clover
 #S-H-D-C
 
+#imports
 import random
 import socket
 import time
 import threading
+import library
 
+
+#constants
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 CARD_PATTEN = ["S", "H", "D", "C"]
 CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
@@ -16,68 +20,190 @@ CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 handCardList = [int(0) for i in range(17) ]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
 SERVER_ADDR = 'onlinepoker.hopto.org'
-PORT = 31597
 
 
-id = -1
-
-
-class Apicall:
-    def join(self, roomID, roomPW):
-        pass
-
-    def create(self, roomName, roomPW, baseBetting, baseMoney):
-        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}')
-
-    def leave(self):
-        pass
-
-    def bet(self, check, call, allin, half, quarter, fold, money):
-        pass
-
-    def drawCard(self, card, isHidden):
-        pass
-
-    def removeCard(self, card):
-        pass
-
-    def openCard(self, card):
-        pass
-
-    def startGame(self):
-        pass
-
-    def checkUserMoney(self, money):
-        pass
-
-    def checkTableMoney(self, money):
-        pass
-
-    def winner(self, ID, nickname):
-        pass
-
-    def register(self, nickname):
-        clientSocket.sendMessageQueue.append(f"-1 0 {nickname}")
-
-
-class Gameplay:
+class ClientSocket:
     def __init__(self):
-        self.generate_deck()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP socket
+        self.socket.connect(SERVER_ADDR, library.PORT)
+        self.sendMessageQueue = [] #any message added here will be sent to server
+        self.receiveMessageQueue = [] #any message from server will be stored here
+        self.sentMessageQueue = [] #any sent message will be stored here for further process
+        self.receivedCommands = []
+        self.receivedResponses = []
+    def listen_server_message(self): #message listener
+        while True:
+            serverMessage = self.socket.recv(2048)
+            if serverMessage == '':
+                print('server connection closed')
+                exit()
+            self.receiveMessageQueue.append(serverMessage)
+    def send_server_message(self): #message sender
+        while True:
+            if len(self.sendMessageQueue) > 0:
+                message = str(self.sendMessageQueue.pop(0))
+                self.socket.send(message.encode())
+                self.sentMessageQueue.append(message)
+            time.sleep(0.1)
+    def sort_received_message(self):
+        while True:
+            for i in self.receiveMessageQueue:
+                if i.split()[2] == 'response':
+                    self.receivedResponses.append(i)
+                else:
+                    self.receivedCommands.append(i)
+                self.receiveMessageQueue.remove(i)
+            time.sleep(0.1)
+    def handle_commands(self):
+        while True:
+            #handle received commands
+            time.sleep(0.1)
 
-    def generate_deck(self): #generate card deck
-        deck = [i for i in range(1, 53)]
-        self.deck = deck
 
 
-    def card_draw(self): #draw a card
-        # 1. draw a card randomly from a list
-        drawCard = random.choice(self.deck)
-        self.deck.remove(drawCard)
-        return drawCard
+#start socket
+clientSocket = ClientSocket() #init socket connection
 
-    def calculate_ranking(self): #hand-ranking
-        global HAND_RANKING
-        pass
+#start listening from server in a different thread so that listening would go concurrently
+tempThread = threading.Thread(target=clientSocket.listen_server_message)
+tempThread.start()
+
+#start sending to server in a different thread so that sending would go concurrently
+tempThread = threading.Thread(target=clientSocket.send_server_message)
+tempThread.start()
+
+
+#send registration message and receive response
+def register(nickname):
+    clientSocket.sendMessageQueue.append(f"-1 0 register {nickname}")
+    while len(clientSocket.receiveMessageQueue) == 0:
+        time.sleep(0.1)
+    message = str(clientSocket.receiveMessageQueue.pop(0))
+    messageList = message.split()
+    assert(messageList[1] == messageList[4] and messageList[3] == 'registered') #quit if not true
+    return messageList[1]
+
+
+#init player handler
+library.playerHandler.players[0] = library.Player('server', clientSocket, 0)
+
+
+#register
+nickname = input("닉네임을 입력하세요. : ")
+thisClient = library.Player(nickname, None, register(nickname))
+library.playerHandler.players[thisClient.playerID] = thisClient
+
+
+tempThread = threading.Thread(target=clientSocket.sort_received_message)
+tempThread.start()
+
+
+#fetch rooms
+def fetch_rooms():
+    sentMessage = f'{thisClient.playerID} 0 fetch rooms'
+    clientSocket.sendMessageQueue.append(sentMessage)
+    while f'0 {thisClient.playerID} response fetch rooms start' not in clientSocket.receivedResponses:
+        time.sleep(0.1)
+    rooms = []
+    startIndex = clientSocket.receivedResponses.index(f'0 {thisClient.playerID} response fetch rooms start')
+    clientSocket.receivedResponses.pop(startIndex)
+    while clientSocket.receiveMessageQueue[startIndex] != f'0 {thisClient.playerID} response fetch rooms end':
+        room = clientSocket.receivedResponses.pop(startIndex).split()[6:]
+        rooms.append(library.Room(room[0], room[1], None, room[2], room[3], room[4]))
+        time.sleep(0.01)
+    clientSocket.receivedResponses.pop(startIndex)
+    return rooms
+
+#create room
+def create(roomName, roomPW, baseBetting, baseMoney):
+    clientSocket.sendMessageQueue.append(f'{thisClient.playerID} 0 create {roomName} {roomPW} {baseBetting} {baseMoney}')
+    while True not in [i.startswith(f'0 {thisClient.playerID} response created') for i in clientSocket.receivedResponses]:
+        time.sleep(0.1)
+    #find the index of True and pop
+    for i in clientSocket.receivedResponses:
+        if i.startswith(f'0 {thisClient.playerID} response created'):
+            retval = int(i.split()[-1])
+            clientSocket.receivedResponses.remove(i)
+            return retval
+
+#lobby
+def lobby():
+    print('현재 생성된 방')
+    print('---------------')
+    roomList = fetch_rooms()
+    for i in roomList:
+        print(f'ID : {i.roomID}, 방 이름 : {i.roomName}, 호스트 닉네임 : {i.host}')
+        print(f'기본 판돈 : {i.baseBetting}$, 기본 지급금 : {i.baseMoney}\n')
+    print('---------------')
+    print("방 생성과 방 참가 중 하나를 선택해주세요. ")
+    joinOrCreate = int(input("1.방 생성, 2.방 참가, 3.종료: "))
+    if joinOrCreate == 1:#create
+        print("방을 생성합니다. ")
+        roomName = input("방 제목을 입력해주세요: ")
+        roomPW = input("방 비밀번호를 입력해주세요: ")
+        BASEMONEY = [50, 75, 100]
+        print("초기 소지 금액을 선택해주세요.")
+        choiceBaseMoney = int(input("1. 50$, 2. 75$, 3. 100$ : "))
+        while choiceBaseMoney not in range(1, 4):
+            print("1번, 2번, 3번 중 하나를 선택해주세요.")
+        baseMoney = int(BASEMONEY[choiceBaseMoney -1])
+        print("기본 베팅 금액을 설정해주세요. ")
+        baseBetting = int(input("(1~10사이 숫자를 입력하세요.): "))
+        while baseBetting not in range(1, 11):
+            print("1~10사이 숫자를 입력해주세요.")
+        print("호스트:", nickname, ", 방 제목:", roomName , ", 비밀번호:",roomPW, ", 초기 소지 금액:", str(baseMoney) +"$",", 기본 베팅 금액:", str(baseBetting) +"$")
+        create(roomName, roomPW, baseBetting, baseMoney)
+        print("방이 생성되었습니다.")
+    elif joinOrCreate == 2:#join
+        joinRoomID = input("방 ID를 입력해주세요: ")
+        if joinRoomID in [i.roomID for i in roomList]:
+            joinRoomPW = int(input("비밀번호를 입력해주세요: "))
+            join(joinRoomID, joinRoomPW)
+            print("룸에 입장하셨습니다.")
+        else:
+            print("방이 존재하지 않습니다.")
+    elif joinOrCreate == 3:
+        print("게임을 종료합니다.")
+        exit()
+    else:
+        print("잘못된 입력입니다.")
+
+
+#gameroom
+
+def join(roomID, roomPW):
+    pass
+
+
+def leave(self):
+    pass
+
+def bet(check, call, allin, half, quarter, fold, money):
+    pass
+
+def drawCard(card, isHidden):
+    pass
+
+def removeCard(card):
+    pass
+
+def openCard(card):
+    pass
+
+def startGame(self):
+    pass
+
+def checkUserMoney(money):
+    pass
+
+def checkTableMoney(money):
+    pass
+
+def winner(ID, nickname):
+    pass
+
+
+
 
 def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
     global CARD_PATTEN
@@ -98,8 +224,6 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
     highestNum = [0] * 13
     highestPattern = ["C"] * 13
 
-
-
     #-
     #highCard 0
     #handcardList[:13] = number
@@ -115,8 +239,8 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                 if highestNum[0] == tempNum:
                     tempPattern = playerHandPattern[idx]
                     if CARD_PATTEN.index(highestPattern[0]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[0] = tempPattern         
-    
+                        highestPattern[0] = tempPattern
+
     for idx in range(13):
         #Onepair, TwoPair 1
         if handCardList[idx] == 2:
@@ -130,7 +254,7 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                 if highestNum[1] == tempNum:
                     tempPattern = playerHandPattern[idx]
                     if CARD_PATTEN.index(highestPattern[1]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[1] = tempPattern   
+                        highestPattern[1] = tempPattern
 
         #Three of kind 2
         if handCardList[idx] == 3:
@@ -145,7 +269,7 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                     tempPattern = playerHandPattern[idx]
 
                     if CARD_PATTEN.index(highestPattern[2]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[2] = tempPattern   
+                        highestPattern[2] = tempPattern
 
     #Straight 3
     for straightNum in range(6,13):
@@ -162,17 +286,17 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                     if highestNum[3] == tempNum:
                         tempPattern = playerHandPattern[idx]
                         if CARD_PATTEN.index(highestPattern[3]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[3] = tempPattern   
+                            highestPattern[3] = tempPattern
 
     #BackStraight 4
     if handCardList[0] >= 1 and handCardList[1] >= 1 and handCardList[2] >= 1 and handCardList[3] >= 1 and handCardList[4] >= 1:
-        backStraightCheck += 1  
+        backStraightCheck += 1
         highestNum[4] = 1
         for idx, tempNum in enumerate(playerHandNum):
                 if highestNum[4] == tempNum:
                     tempPattern = playerHandPattern[idx]
                     if CARD_PATTEN.index(highestPattern[4]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[4] = tempPattern 
+                        highestPattern[4] = tempPattern
 
     #Mountain 5
     elif handCardList[0] >= 1 and handCardList[9] >= 1 and handCardList[10] >= 1 and handCardList[11] >= 1 and handCardList[12] >= 1 :
@@ -182,11 +306,11 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                 if highestNum[5] == tempNum:
                     tempPattern = playerHandPattern[idx]
                     if CARD_PATTEN.index(highestPattern[5]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[5] = tempPattern 
+                        highestPattern[5] = tempPattern
 
 
     #Flush 6
-    for idx, cardPatten in enumerate(handCardList[13: ]): 
+    for idx, cardPatten in enumerate(handCardList[13: ]):
         if cardPatten >= 5:
             flushCheck += 1
             flushPattern = CARD_PATTEN[idx]
@@ -202,7 +326,7 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                 highestNum[6] = flushList[-1]
 
 
-    #FullHouse 7  
+    #FullHouse 7
     if (pairCheck >= 1 and tokCheck == 1) or (tokCheck >= 2):
         fullHoushCheck+= 1
         for idx in range(13):
@@ -217,7 +341,7 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
                         tempPattern = playerHandPattern[idx]
 
                         if CARD_PATTEN.index(highestPattern[7]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[7] = tempPattern 
+                            highestPattern[7] = tempPattern
 
     #FourCard 8
     for idx in range(13):
@@ -249,12 +373,7 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
         if [1, 10, 11, 12, 13] == flushList:
             highestNum[11] = 1
             highestPattern[11] = flushPattern
-            royalStraightFlushCheck += 1 
-    
-
-        
-
-
+            royalStraightFlushCheck += 1
 
 
 
@@ -265,7 +384,6 @@ def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
 
     if royalStraightFlushCheck >= 1:
         return ["RoyalStraightFlush", highestNum[11], highestPattern[11]]
-        
 
     elif backStraightFlushCheck>= 1:
         return ["backStraightFlush", highestNum[10], highestPattern[10]]
@@ -321,7 +439,7 @@ def number_to_card(number):
         playerHandNum.append(cardNum)
         playerHandPattern.append(cardPatten)
         return this_card
-    elif number in range(27, 40): #Diamond 
+    elif number in range(27, 40): #Diamond
         this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
         cardPatten = CARD_PATTEN[2]
         cardNum = CARD_NUM[number - 27]
@@ -340,54 +458,8 @@ def print_player_hand():
     global playerHand
     print("지금 가지고 계신 패는",  ','.join(playerHand) ,'입니다.')
 
-class ClientSocket:
-    def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(SERVER_ADDR, PORT)
-        self.sendMessageQueue = []
-        self.receiveMessageQueue = []
-        self.sentMessageQueue = []
-        self.receivedAcks = []
-        self.receivedCommands = []
-    def listen_server_message(self):
-        while True:
-            serverMessage = self.socket.recv(2048)
-            self.receiveMessageQueue.append(serverMessage)
-    def send_server_message(self):
-        while True:
-            if len(self.sendMessageQueue) > 0:
-                message = str(self.sendMessageQueue.pop(0))
-                self.socket.send(message.encode())
-                self.sentMessageQueue.append(message)
-            time.sleep(0.1)
-    def sort_received_messages(self):
-        while True:
-            if len(self.receiveMessageQueue) > 0:
-                message = str(self.receiveMessageQueue.pop(0))
-                messageList = message.split()
-                command = messageList[2]
-                if command is 'ack':
-                    self.receivedAcks.append(message)
-                else:
-                    self.receivedCommands.append(message)
-            time.sleep(0.1)
-    def handle_ack_messages(self):
-        while True:
-            if len(self.receivedAcks) > 0:
-                message = str(self.receivedAcks.pop(0))
-                messageList = message.split()
-                if messageList[3] != 'OK':
-                    print(message)
 
 
-
-clientSocket = ClientSocket()
-tempThread = threading.Thread(target=clientSocket.listen_server_message)
-tempThread.start()
-tempThread = threading.Thread(target=clientSocket.send_server_message)
-tempThread.start()
-tempThread = threading.Thread(target=clientSocket.sort_received_messages)
-tempThread.start()
 
 #4장을 준다
 test = Gameplay()
@@ -400,67 +472,14 @@ playerHandPattern = []#핸드의 무늬
 '''
 
 
-userList = []
-roomList = {"Hello" : 1234}
-nickname = input("닉네임을 입력하세요. : ")
-while nickname in userList: #리스트에 있는 유저 닉네임과 비교, 만약 같은 닉네임이 있으면 생성 제한.
-    print("이미 존재하는 닉네임입니다.")
-    nickname = input("닉네임을 다시 입력하세요. : ")
 
 while True:
-    print("방 생성과 방 참가 중 하나를 선택해주세요. ")
-    joinOrCreate = int(input("1.방 생성, 2.방 참가, 3.종료: "))
-
-    if joinOrCreate == 1:#create
-
-        print("방을 생성합니다. ")
-        createRoomName = input("방 제목을 입력해주세요: ")
-
-        createRoomPW = input("방 비밀번호를 입력해주세요: ")
-
-        BASEMONEY = [50, 75, 100]
-        print("초기 소지 금액을 선택해주세요.")zzzzz
-        choiceBaseMoney = int(input("1. 50$, 2. 75$, 3. 100$ : "))
-        while choiceBaseMoney not in range(1, 4):
-            print("1번, 2번, 3번 중 하나를 선택해주세요.")
-        createBaseMoney = int(BASEMONEY[choiceBaseMoney -1])
-
-        print("기본 베팅 금액을 설정해주세요. ")
-        createBaseBetting = int(input("(1~10사이 숫자를 입력하세요.): "))
-        while createBaseBetting not in range(1, 11):
-            print("1~10사이 숫자를 입력해주세요.")
-        print("호스트:", nickname, ", 방 제목:", createRoomName , ", 비밀번호:",createRoomPW, ", 초기 소지 금액:", str(createBaseMoney) +"$",", 기본 베팅 금액:", str(createBaseBetting) +"$")
-        print("방이 생성되었습니다.")    
-        break
-
-
-
-    elif joinOrCreate == 2:#join
-        joinRoomName = input("방 제목을 입력해주세요: ")
-        if joinRoomName in roomList:
-            joinRoomPW = int(input("비밀번호를 입력해주세요: "))
-            if joinRoomPW == roomList[joinRoomName]:
-                print("룸에 입장하셨습니다.")
-                break
-            else:
-                print("비밀번호가 일치하지 않습니다.")
-                continue
-        else:
-            print("방이 존재하지 않습니다.")
-            continue
-
-    elif joinOrCreate == 3:
-        print("게임을 종료합니다.")
-        quit()
-
-    else:
-        print("잘못된 입력입니다.")
-
+    pass
 '''
 #초기 패 설정
 '''
 
-for count in range(4): 
+for count in range(4):
     playerHand.append(number_to_card(test.card_draw()))
 print_player_hand()
 
@@ -478,17 +497,17 @@ openCard = int(input("오픈할 카드를 선택해주세요. : "))
 playerHand[openCard -1] = playerHand[openCard - 1] + "(open)"
 
 #PlayerHandSWAP
-swap = playerHand[0] 
+swap = playerHand[0]
 playerHand[0] = playerHand[openCard-1]
 playerHand[openCard -1 ] = swap
 
 #PlayerHandNumSWAP
-swap = playerHandNum[0] 
+swap = playerHandNum[0]
 playerHandNum[0] = playerHandNum[openCard-1]
 playerHandNum[openCard -1 ] = swap
 
 #PlayerHandPatternSWAP
-swap = playerHandPattern[0] 
+swap = playerHandPattern[0]
 playerHandPattern[0] = playerHandPattern[openCard-1]
 playerHandPattern[openCard -1 ] = swap
 
