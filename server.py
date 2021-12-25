@@ -124,3 +124,5 @@ def listen_client_message(newConnection, newConnectionAddr):
                     newConnection.send(f'0 -1 ack badRequest wrongCommand')
 
 
+tempThread = threading.Thread(target=listen_tcp_connection)
+tempThread.start()
