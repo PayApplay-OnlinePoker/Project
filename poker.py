@@ -152,7 +152,8 @@ def lobby():
         while baseBetting not in range(1, 11):
             print("1~10사이 숫자를 입력해주세요.")
         print("호스트:", nickname, ", 방 제목:", roomName , ", 비밀번호:",roomPW, ", 초기 소지 금액:", str(baseMoney) +"$",", 기본 베팅 금액:", str(baseBetting) +"$")
-        create(roomName, roomPW, baseBetting, baseMoney)
+        roomID = create(roomName, roomPW, baseBetting, baseMoney)
+        thisClient.joinedRoom = roomID
         print("방이 생성되었습니다.")
     elif joinOrCreate == 2:#join
         joinRoomID = input("방 ID를 입력해주세요: ")
@@ -462,7 +463,7 @@ def print_player_hand():
 
 
 #4장을 준다
-test = Gameplay()
+#test = Gameplay()
 playerHand = [] #사용자가 보는 것.
 playerHandNum = [] #핸드의 숫자
 playerHandPattern = []#핸드의 무늬
@@ -479,10 +480,12 @@ while True:
 #초기 패 설정
 '''
 
+'''
 for count in range(4):
     playerHand.append(number_to_card(test.card_draw()))
 print_player_hand()
 
+'''
 #카드 한장 버리기
 print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2], "4:" + playerHand[3])
 removeCard = int(input("버릴 카드를 선택해주세요. : "))
@@ -515,14 +518,14 @@ print_player_hand()
 
 #오픈 카드 3장 주기.
 for playTurn in range(4, 7):
-    playerHand.append(number_to_card(test.card_draw()))
+    #playerHand.append(number_to_card(test.card_draw()))
     print(playTurn, "번째 카드는", playerHand[-1], "입니다.")
     playerHand[-1] = playerHand[-1] + "(open)"
     print_player_hand()
 
 #히든 카드 1장 주기.
 print("7번째 카드 입니다.")
-playerHand.append(number_to_card(test.card_draw()))
+#playerHand.append(number_to_card(test.card_draw()))
 print_player_hand()
 
 for i in playerHandNum:
