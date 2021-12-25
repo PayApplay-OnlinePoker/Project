@@ -57,7 +57,7 @@ class Apicall:
         pass
 
     def register(self, nickname):
-        clientSocket.sendMessageQueue.append("")
+        clientSocket.sendMessageQueue.append(f"-1 0 {nickname}")
 
 
 class Gameplay:
@@ -363,7 +363,7 @@ class ClientSocket:
     def sort_received_messages(self):
         while True:
             if len(self.receiveMessageQueue) > 0:
-                message = str(receiveMessageQueue.pop(0))
+                message = str(self.receiveMessageQueue.pop(0))
                 messageList = message.split()
                 command = messageList[2]
                 if command is 'ack':
@@ -374,11 +374,11 @@ class ClientSocket:
     def handle_ack_messages(self):
         while True:
             if len(self.receivedAcks) > 0:
-                message = str(receivedAcks.pop(0))
+                message = str(self.receivedAcks.pop(0))
                 messageList = message.split()
                 if messageList[3] != 'OK':
                     print(message)
-                #보낸 메시지에서 찾아서 날려야 함.
+
 
 
 clientSocket = ClientSocket()
