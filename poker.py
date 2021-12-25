@@ -9,8 +9,6 @@ import socket
 import time
 import threading
 
-
-HAND_RANKING = ["HC", "OP", "TP", "TK", "S", "BS", "MT", "F", "FH", "FC", "SF", "BSF", "RSF"]
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
 CARD_PATTEN = ["S", "H", "D", "C"]
 CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
@@ -29,7 +27,7 @@ class Apicall:
         pass
 
     def create(self, roomName, roomPW, baseBetting, baseMoney):
-        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}'
+        clientSocket.sendMessageQueue.append(f'{id} 0 {roomName} {roomPW} {baseBetting} {baseMoney}')
 
     def leave(self):
         pass
@@ -81,8 +79,9 @@ class Gameplay:
         global HAND_RANKING
         pass
 
-def HandRankingReturn(handCardList):
+def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
     global CARD_PATTEN
+    global flushPattern
     royalStraightFlushCheck = 0
     backStraightFlushCheck = 0
     straightFlushCheck = 0
@@ -93,145 +92,248 @@ def HandRankingReturn(handCardList):
     backStraightCheck = 0
     straightCheck = 0
     startStraightNum = 0
+    fullHoushCheck = 0
     tokCheck = 0
     pairCheck = 0
+    highestNum = [0] * 13
+    highestPattern = ["C"] * 13
 
 
 
-    #Flush
-    for idx, cardPatten in enumerate(handCardList[13: ]): 
-        if cardPatten >= 5:
-            flushCheck += 1
-            flushPatten = CARD_PATTEN[idx]
-            for idx, listPatten in enumerate(playerHandPatten):
-                if listPatten == flushPatten:
-                    flushList.append(str(playerHandNum[idx]))
-        flushList.sort()
-    #Mountain
-    if handCardList[0] >= 1 and handCardList[9] >= 1 and handCardList[10] >= 1 and handCardList[11] >= 1 and handCardList[12] >= 1 :
-        mountainCheck += 1
+    #-
+    #highCard 0
+    #handcardList[:13] = number
+    #handcardLust[13:] = pattern
+    for idx in range(13):
+        if handCardList[idx] >= 1:
+            if highestNum[0] == 1:
+                pass
+            else:
+                highestNum[0] = idx + 1
 
-    #BackStraight
-    elif handCardList[0] >= 1 and handCardList[1] >= 1 and handCardList[2] >= 1 and handCardList[3] >= 1 and handCardList[4] >= 1 :
-        backStraightCheck += 1  
+            for idx, tempNum in enumerate(playerHandNum):
+                if highestNum[0] == tempNum:
+                    tempPattern = playerHandPattern[idx]
+                    if CARD_PATTEN.index(highestPattern[0]) > CARD_PATTEN.index(tempPattern):
+                        highestPattern[0] = tempPattern         
+    
+    for idx in range(13):
+        #Onepair, TwoPair 1
+        if handCardList[idx] == 2:
+            pairCheck += 1
+            if highestNum[1] == 1:
+                pass
+            else:
+                highestNum[1] = idx + 1
 
-    #Straight
-    else:
-        for straightNum in range(10):
-            if handCardList[straightNum] >= 1 and handCardList[straightNum + 1] >= 1 and handCardList[straightNum + 2] >= 1 and handCardList[straightNum + 3] >= 1 and handCardList[straightNum + 4] >= 1:
+            for idx, tempNum in enumerate(playerHandNum):
+                if highestNum[1] == tempNum:
+                    tempPattern = playerHandPattern[idx]
+                    if CARD_PATTEN.index(highestPattern[1]) > CARD_PATTEN.index(tempPattern):
+                        highestPattern[1] = tempPattern   
+
+        #Three of kind 2
+        if handCardList[idx] == 3:
+            tokCheck += 1
+            if highestNum[2] == 1:
+                pass
+            else:
+                highestNum[2] = idx + 1
+
+            for idx, tempNum in enumerate(playerHandNum):
+                if highestNum[2] == tempNum:
+                    tempPattern = playerHandPattern[idx]
+
+                    if CARD_PATTEN.index(highestPattern[2]) > CARD_PATTEN.index(tempPattern):
+                        highestPattern[2] = tempPattern   
+
+    #Straight 3
+    for straightNum in range(6,13):
+            if handCardList[straightNum] >= 1 and handCardList[straightNum - 1] >= 1 and handCardList[straightNum - 2] >= 1 and handCardList[straightNum - 3] >= 1 and handCardList[straightNum - 4] >= 1:
                 straightCheck += 1
                 temp = straightNum
                 if startStraightNum < temp:
                     startStraightNum = temp
-            straightList = [str(startStraightNum + i) for i in range(5)]
-            straightList.sort()
+                straightList = [startStraightNum - i for i in range(5)]
+                straightList.sort()
+                print(straightList)
+                highestNum[3] = straightList[-1]
+                for idx, tempNum in enumerate(playerHandNum):
+                    if highestNum[3] == tempNum:
+                        tempPattern = playerHandPattern[idx]
+                        if CARD_PATTEN.index(highestPattern[3]) > CARD_PATTEN.index(tempPattern):
+                            highestPattern[3] = tempPattern   
+
+    #BackStraight 4
+    if handCardList[0] >= 1 and handCardList[1] >= 1 and handCardList[2] >= 1 and handCardList[3] >= 1 and handCardList[4] >= 1:
+        backStraightCheck += 1  
+        highestNum[4] = 1
+        for idx, tempNum in enumerate(playerHandNum):
+                if highestNum[4] == tempNum:
+                    tempPattern = playerHandPattern[idx]
+                    if CARD_PATTEN.index(highestPattern[4]) > CARD_PATTEN.index(tempPattern):
+                        highestPattern[4] = tempPattern 
+
+    #Mountain 5
+    elif handCardList[0] >= 1 and handCardList[9] >= 1 and handCardList[10] >= 1 and handCardList[11] >= 1 and handCardList[12] >= 1 :
+        mountainCheck += 1
+        highestNum[5] = 1
+        for idx, tempNum in enumerate(playerHandNum):
+                if highestNum[5] == tempNum:
+                    tempPattern = playerHandPattern[idx]
+                    if CARD_PATTEN.index(highestPattern[5]) > CARD_PATTEN.index(tempPattern):
+                        highestPattern[5] = tempPattern 
 
 
+    #Flush 6
+    for idx, cardPatten in enumerate(handCardList[13: ]): 
+        if cardPatten >= 5:
+            flushCheck += 1
+            flushPattern = CARD_PATTEN[idx]
+            for idx, listPatten in enumerate(playerHandPattern):
+                if listPatten == flushPattern:
+                    flushList.append(playerHandNum[idx])
 
-    #royalStraightFlush
-    if mountainCheck >= 1 and flushCheck >= 1:
-        if ["1", "10", "11", "12", "13"] == flushList:
-            royalStraightFlushCheck += 1 
+            flushList.sort()
+            highestPattern[6] = flushPattern
+            if 1 in flushList :
+                highestNum[6] = 1
+            else:
+                highestNum[6] = flushList[-1]
+
+
+    #FullHouse 7  
+    if (pairCheck >= 1 and tokCheck == 1) or (tokCheck >= 2):
+        fullHoushCheck+= 1
+        for idx in range(13):
+            if handCardList[idx] == 3:
+                if highestNum[7] == 1:
+                    pass
+                else:
+                    highestNum[7] = idx + 1
+
+                for idx, tempNum in enumerate(playerHandNum):
+                    if highestNum[7] == tempNum:
+                        tempPattern = playerHandPattern[idx]
+
+                        if CARD_PATTEN.index(highestPattern[7]) > CARD_PATTEN.index(tempPattern):
+                            highestPattern[7] = tempPattern 
+
+    #FourCard 8
+    for idx in range(13):
+        if handCardList[idx] == 4:
+            highestPattern[8] = "S"
+            fourCheck += 1
+            if highestNum[8] == 1:
+                pass
+            else:
+                highestNum[8] = idx + 1
+
+
+    #StraightFlush 9
+    if straightCheck >= 1 and flushCheck >= 1:
+        if straightList == flushList:
+            highestNum[9] = int(straightList[-1])
+            highestPattern[9] = flushPattern
+            straightFlushCheck += 1
 
     #backStraightFlush
     if backStraightCheck >= 1 and flushCheck >= 1:
-        if ["1", "2", "3", "4", "5"] == flushList:
-            backStraightCheck += 1
+        if [1, 2, 3, 4, 5] == flushList:
+            highestNum[10] = 1
+            highestPattern[10] = flushPattern
+            backStraightFlushCheck += 1
 
-    #StraightFlush
-    if straightCheck >= 1 and flushCheck >= 1:
-        if straightList == flushList:
-            straightFlushCheck += 1
+    #royalStraightFlush
+    if mountainCheck >= 1 and flushCheck >= 1:
+        if [1, 10, 11, 12, 13] == flushList:
+            highestNum[11] = 1
+            highestPattern[11] = flushPattern
+            royalStraightFlushCheck += 1 
+    
 
-
-    for idx, cardCount in enumerate(handCardList[0:13]): #Onepair, Twopair, FullHouse, FourCard
-        if cardCount == 2:
-            pairCheck += 1
-
-        if cardCount == 3:
-            tokCheck += 1
         
-        if cardCount == 4:
-            fourCheck += 1
-            
-    for idx, temp in enumerate(playerHandNum):
-        pass
 
 
+
+
+
+
+#----------------------------------------------------------#
 
     #return ["랭크", "하이카드", "무늬"]
 
     if royalStraightFlushCheck >= 1:
-        return "RoyalStraightFlush"
+        return ["RoyalStraightFlush", highestNum[11], highestPattern[11]]
         
 
     elif backStraightFlushCheck>= 1:
-        return "backStraightFlush"
+        return ["backStraightFlush", highestNum[10], highestPattern[10]]
 
     elif straightFlushCheck>= 1:
-        return "straightStraightFlush"
+        return ["StraightFlush", highestNum[9], highestPattern[9]]
 
     elif fourCheck >= 1: #FourCard
-        return "FourCard"
+        return ["FourCard", highestNum[8], highestPattern[8]]
 
-    elif (pairCheck >= 1 and tokCheck == 1) or (tokCheck >= 2):#FullHouse
-        return "FullHouse"
+    elif fullHoushCheck >= 1:#FullHouse
+        return ["FullHouse", highestNum[7], highestPattern[7]]
 
     elif flushCheck >= 1: #Flush
-        return "Flush"
+        return ["Flush", highestNum[6], highestPattern[6]]
 
     elif mountainCheck >= 1: #mountain
-        return "mountain", "A"
+        return ["mountain", highestNum[5], highestPattern[5]]
 
     elif backStraightCheck >= 1: #backstraight
-        return "backStraight"
+        return ["backStraight", highestNum[4], highestPattern[4]]
 
     elif straightCheck >= 1: #straight
-        return "Straight"
+        return ["Straight", highestNum[3], highestPattern[3]]
 
     elif tokCheck == 1: #Three of Kind
-        return "Three of kind(Triple)"
+        return ["Three of kind(Triple)", highestNum[2], highestPattern[2]]
 
     elif pairCheck >= 2:#TwoPair
-        return "Two Pair"
+        return ["TwoPair", highestNum[1], highestPattern[1]]
 
     elif pairCheck == 1:#OnePair
-        return "One Pair"
+        return ["OnePair", highestNum[1], highestPattern[1]]
 
     else: #HighCard
-        return "HighCard"
+        return ["HighCard", highestNum[0], highestPattern[0]]
 
 
 def number_to_card(number):
     global playerHandNum
-    global playerHandPatten
+    global playerHandPattern
     if number in range(1, 14): #Spade
         this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
         cardPatten = CARD_PATTEN[0]
         cardNum = CARD_NUM[number - 1]
         playerHandNum.append(cardNum)
-        playerHandPatten.append(cardPatten)
+        playerHandPattern.append(cardPatten)
         return this_card
     elif number in range(14, 27): #Heart
         this_card = CLIENT_PATTEN[1] + CLIENT_CARD[number - 14]
         cardPatten = CARD_PATTEN[1]
         cardNum = CARD_NUM[number - 14]
         playerHandNum.append(cardNum)
-        playerHandPatten.append(cardPatten)
+        playerHandPattern.append(cardPatten)
         return this_card
     elif number in range(27, 40): #Diamond 
         this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
         cardPatten = CARD_PATTEN[2]
         cardNum = CARD_NUM[number - 27]
         playerHandNum.append(cardNum)
-        playerHandPatten.append(cardPatten)
+        playerHandPattern.append(cardPatten)
         return this_card
     elif number in range(40, 53): #Clover
         this_card = CLIENT_PATTEN[3] + CLIENT_CARD[number - 40]
         cardPatten = CARD_PATTEN[3]
         cardNum = CARD_NUM[number - 40]
         playerHandNum.append(cardNum)
-        playerHandPatten.append(cardPatten)
+        playerHandPattern.append(cardPatten)
         return this_card
 
 def print_player_hand():
@@ -291,11 +393,13 @@ tempThread.start()
 test = Gameplay()
 playerHand = [] #사용자가 보는 것.
 playerHandNum = [] #핸드의 숫자
-playerHandPatten = []#핸드의 무늬
+playerHandPattern = []#핸드의 무늬
 #CUI Part
 '''
 일단 서버와의 통신 없이.  CUI만 구현, 이후 통신이 구현 되면 필요한 부분 수정.
 '''
+
+
 userList = []
 roomList = {"Hello" : 1234}
 nickname = input("닉네임을 입력하세요. : ")
@@ -315,7 +419,7 @@ while True:
         createRoomPW = input("방 비밀번호를 입력해주세요: ")
 
         BASEMONEY = [50, 75, 100]
-        print("초기 소지 금액을 선택해주세요.")
+        print("초기 소지 금액을 선택해주세요.")zzzzz
         choiceBaseMoney = int(input("1. 50$, 2. 75$, 3. 100$ : "))
         while choiceBaseMoney not in range(1, 4):
             print("1번, 2번, 3번 중 하나를 선택해주세요.")
@@ -352,8 +456,10 @@ while True:
     else:
         print("잘못된 입력입니다.")
 
-
+'''
 #초기 패 설정
+'''
+
 for count in range(4): 
     playerHand.append(number_to_card(test.card_draw()))
 print_player_hand()
@@ -363,7 +469,7 @@ print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2], "4:" + p
 removeCard = int(input("버릴 카드를 선택해주세요. : "))
 del playerHand[removeCard - 1]
 del playerHandNum[removeCard - 1]
-del playerHandPatten[removeCard - 1]
+del playerHandPattern[removeCard - 1]
 
 #카드 한장 오픈하기
 print("1:" + playerHand[0], "2:" + playerHand[1], "3:" + playerHand[2])
@@ -381,10 +487,10 @@ swap = playerHandNum[0]
 playerHandNum[0] = playerHandNum[openCard-1]
 playerHandNum[openCard -1 ] = swap
 
-#PlayerHandPattenSWAP
-swap = playerHandPatten[0] 
-playerHandPatten[0] = playerHandPatten[openCard-1]
-playerHandPatten[openCard -1 ] = swap
+#PlayerHandPatternSWAP
+swap = playerHandPattern[0] 
+playerHandPattern[0] = playerHandPattern[openCard-1]
+playerHandPattern[openCard -1 ] = swap
 
 print_player_hand()
 
@@ -402,7 +508,7 @@ print_player_hand()
 
 for i in playerHandNum:
     handCardList[i - 1] += 1
-for j in playerHandPatten:
+for j in playerHandPattern:
     if j == "S":
         handCardList[13] += 1
     elif j == "H":
@@ -412,4 +518,5 @@ for j in playerHandPatten:
     else:
         handCardList[16] += 1
 
-print("당신의 패는", HandRankingReturn(handCardList), "입니다.")
+
+print("당신의 패는", HandRankingReturn(handCardList, playerHandNum, playerHandPattern), "입니다.")
