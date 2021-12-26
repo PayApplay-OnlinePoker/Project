@@ -20,12 +20,25 @@ class Room:
         self.userMoney = {host:baseMoney}
 
 class Player:
-    def __init__(self, nickname, socket, ID):
-        self.nickname = nickname
-        self.socket = socket
-        self.messageQueue = []
-        self.playerID = ID
-        self.joinedRoom = 0
+    def __init__(self):
+        self.playerHand = []
+        self.playerHandNum = []
+        self.playerHandPattern = []
+        self.playerHandRanking = []
+        self.openCardList = []
+        self.handCardList = [0 for i in range(17)]
+        self.playerMoney = 0
+
+    def clear(self):
+        self.playerHand = []
+        self.playerHandNum = []
+        self.playerHandPattern = []
+        self.playerHandRanking = []
+        self.openCardList = []
+        self.handCardList_Clear()
+
+    def handCardList_Clear(self):
+        self.handCardList = [0 for i in range(17)]
 
 class PlayerHandler:
     def __init__(self):
@@ -82,27 +95,31 @@ class Gameplay:
                 else:
                     highestNum[0] = idx + 1
 
-                for idx, tempNum in enumerate(playerHandNum):
-                    if highestNum[0] == tempNum:
-                        tempPattern = playerHandPattern[idx]
-                        if CARD_PATTEN.index(highestPattern[0]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[0] = tempPattern
+        for idx, tempNum in enumerate(playerHandNum):
+            if highestNum[0] == tempNum:
+                tempPattern = playerHandPattern[idx]
+                if CARD_PATTEN.index(highestPattern[0]) > CARD_PATTEN.index(tempPattern):
+                    highestPattern[0] = tempPattern
 
         for idx in range(13):
             #Onepair, TwoPair 1
+            #00000020201111114 
+            #playerHandNum = [13, 11, 12, 7, 9, 9, 7]
+            #playerHandPattern = [C, C, C, C ,H, D, S]
             if handCardList[idx] == 2:
                 pairCheck += 1
                 if highestNum[1] == 1:
                     pass
                 else:
-                    highestNum[1] = idx + 1
+                    highestNum[1] = idx + 1 #9
 
-                for idx, tempNum in enumerate(playerHandNum):
-                    if highestNum[1] == tempNum:
-                        tempPattern = playerHandPattern[idx]
-                        if CARD_PATTEN.index(highestPattern[1]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[1] = tempPattern
+        for idx, tempNum in enumerate(playerHandNum):
+            if highestNum[1] == tempNum:
+                tempPattern = playerHandPattern[idx]
+                if CARD_PATTEN.index(highestPattern[1]) > CARD_PATTEN.index(tempPattern):
+                    highestPattern[1] = tempPattern
 
+        for idx in range(13):
             #Three of kind 2
             if handCardList[idx] == 3:
                 tokCheck += 1
@@ -111,12 +128,12 @@ class Gameplay:
                 else:
                     highestNum[2] = idx + 1
 
-                for idx, tempNum in enumerate(playerHandNum):
-                    if highestNum[2] == tempNum:
-                        tempPattern = playerHandPattern[idx]
+        for idx, tempNum in enumerate(playerHandNum):
+            if highestNum[2] == tempNum:
+                tempPattern = playerHandPattern[idx]
 
-                        if CARD_PATTEN.index(highestPattern[2]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[2] = tempPattern
+                if CARD_PATTEN.index(highestPattern[2]) > CARD_PATTEN.index(tempPattern):
+                    highestPattern[2] = tempPattern
 
         #Straight 3
         for straightNum in range(6,13):
@@ -127,7 +144,6 @@ class Gameplay:
                         startStraightNum = temp
                     straightList = [startStraightNum - i for i in range(5)]
                     straightList.sort()
-                    print(straightList)
                     highestNum[3] = straightList[-1]
                     for idx, tempNum in enumerate(playerHandNum):
                         if highestNum[3] == tempNum:
@@ -221,43 +237,43 @@ class Gameplay:
         #return ["랭크", "하이카드", "무늬"]
 
         if royalStraightFlushCheck >= 1:
-            return ["RoyalStraightFlush", highestNum[11], highestPattern[11]]
+            return ["Royal Straight Flush", highestNum[11], highestPattern[11]]
 
         elif backStraightFlushCheck>= 1:
-            return ["backStraightFlush", highestNum[10], highestPattern[10]]
+            return ["Back Straight Flush", highestNum[10], highestPattern[10]]
 
         elif straightFlushCheck>= 1:
-            return ["StraightFlush", highestNum[9], highestPattern[9]]
+            return ["Straight Flush", highestNum[9], highestPattern[9]]
 
         elif fourCheck >= 1: #FourCard
-            return ["FourCard", highestNum[8], highestPattern[8]]
+            return ["Four Cards", highestNum[8], highestPattern[8]]
 
         elif fullHoushCheck >= 1:#FullHouse
-            return ["FullHouse", highestNum[7], highestPattern[7]]
+            return ["Full House", highestNum[7], highestPattern[7]]
 
         elif flushCheck >= 1: #Flush
             return ["Flush", highestNum[6], highestPattern[6]]
 
         elif mountainCheck >= 1: #mountain
-            return ["mountain", highestNum[5], highestPattern[5]]
+            return ["Mountain", highestNum[5], highestPattern[5]]
 
         elif backStraightCheck >= 1: #backstraight
-            return ["backStraight", highestNum[4], highestPattern[4]]
+            return ["Back Straight", highestNum[4], highestPattern[4]]
 
         elif straightCheck >= 1: #straight
             return ["Straight", highestNum[3], highestPattern[3]]
 
         elif tokCheck == 1: #Three of Kind
-            return ["Three of kind(Triple)", highestNum[2], highestPattern[2]]
+            return ["Three of kind", highestNum[2], highestPattern[2]]
 
         elif pairCheck >= 2:#TwoPair
-            return ["TwoPair", highestNum[1], highestPattern[1]]
+            return ["Two Pair", highestNum[1], highestPattern[1]]
 
         elif pairCheck == 1:#OnePair
-            return ["OnePair", highestNum[1], highestPattern[1]]
+            return ["One Pair", highestNum[1], highestPattern[1]]
 
         else: #HighCard
-            return ["HighCard", highestNum[0], highestPattern[0]]
+            return ["High Card", highestNum[0], highestPattern[0]]
 
 '''
 class Card:
