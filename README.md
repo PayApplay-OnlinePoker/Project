@@ -112,7 +112,7 @@
     * registered
         * ID
     * joined
-        * roomID
+        * hostID
     * leaved
         * roomID
     * betted
@@ -153,6 +153,11 @@
                         * baseBetting
                             * baseMoney
                                 * hostNickname
+        * users
+            * end
+            * userID
+                * userNickname
+                    * userMoney
 * register
     * nickname
 * othersCard

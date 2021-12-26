@@ -14,7 +14,6 @@ import library
 
 #constants
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
-CARD_PATTEN = ["S", "H", "D", "C"]
 CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 handCardList = [int(0) for i in range(17) ]
@@ -75,7 +74,7 @@ tempThread.start()
 
 #send registration message and receive response
 def register(nickname):
-    clientSocket.sendMessageQueue.append(f"-1 0 register {nickname}")
+    clientSocket.sendMessageQueue.append(f'-1 0 register {nickname}')
     while len(clientSocket.receiveMessageQueue) == 0:
         time.sleep(0.1)
     message = str(clientSocket.receiveMessageQueue.pop(0))
@@ -86,6 +85,7 @@ def register(nickname):
 
 #init player handler
 library.playerHandler.players[0] = library.Player('server', clientSocket, 0)
+currentRoom = library.Room(0, lobby, '', 0, 0, 0)
 
 
 #register
@@ -112,11 +112,13 @@ def fetch_rooms():
         rooms.append(library.Room(room[0], room[1], None, room[2], room[3], room[4]))
         time.sleep(0.01)
     clientSocket.receivedResponses.pop(startIndex)
+    clientSocket.sentMessageQueue.remove(sentMessage)
     return rooms
 
 #create room
 def create(roomName, roomPW, baseBetting, baseMoney):
-    clientSocket.sendMessageQueue.append(f'{thisClient.playerID} 0 create {roomName} {roomPW} {baseBetting} {baseMoney}')
+    sentMessage = f'{thisClient.playerID} 0 create {roomName} {roomPW} {baseBetting} {baseMoney}'
+    clientSocket.sendMessageQueue.append(sentMessage)
     while True not in [i.startswith(f'0 {thisClient.playerID} response created') for i in clientSocket.receivedResponses]:
         time.sleep(0.1)
     #find the index of True and pop
@@ -124,7 +126,31 @@ def create(roomName, roomPW, baseBetting, baseMoney):
         if i.startswith(f'0 {thisClient.playerID} response created'):
             retval = int(i.split()[-1])
             clientSocket.receivedResponses.remove(i)
+            clientSocket.sentMessageQueue.remove(sentMessage)
+            currentRoom.__init__(retval, roomName, roomPW, baseBetting, baseMoney, thisClient.playerID)
             return retval
+
+#join room
+def join(roomID, roomPW, roomList):
+    sentMessage = f'{thisClient.playerID} 0 join {roomID} {roomPW}'
+    clientSocket.sendMessageQueue.append(sentMessage)
+    #add handling errors later
+    while True not in [i.startswith(f'0 {thisClient.playerID} response joined') for i in clientSocket.receivedResponses]:
+        time.sleep(0.1)
+    for i in clientSocket.receivedResponses:
+        if i.startswith(f'0 {thisClient.playerID} response joined'):
+            startIndex = clientSocket.receivedResponses.index(i)
+            clientSocket.receivedResponses.pop(startIndex)
+            roomInfo = list(filter(lambda item : item.roomID == roomID, roomList))[0]
+            currentRoom.__init__(roomID, roomInfo.roomName, roomPW, roomInfo.baseBetting, roomInfo.baseMoney, int(i.split()[-1]))
+            while clientSocket.receivedResponses[startIndex] != f'0 {thisClient.playerID} response fetch users end':
+                aUser = clientSocket.receivedResponses.pop(startIndex).split()[6:]
+                library.playerHandler.players[int(aUser[0])] = library.Player(aUser[1], None, int(aUser[0]))
+                if int(aUser[0]) != currentRoom.host:
+                    currentRoom.userList.append(int(aUser[0]))
+                currentRoom.userMoney[int(aUser[0])] = int(aUser[2])
+            currentRoom.userMoney[thisClient.playerID] = currentRoom.baseMoney
+
 
 #lobby
 def lobby():
@@ -155,10 +181,10 @@ def lobby():
         create(roomName, roomPW, baseBetting, baseMoney)
         print("방이 생성되었습니다.")
     elif joinOrCreate == 2:#join
-        joinRoomID = input("방 ID를 입력해주세요: ")
+        joinRoomID = int(input("방 ID를 입력해주세요: "))
         if joinRoomID in [i.roomID for i in roomList]:
             joinRoomPW = int(input("비밀번호를 입력해주세요: "))
-            join(joinRoomID, joinRoomPW)
+            join(joinRoomID, joinRoomPW, roomList)
             print("룸에 입장하셨습니다.")
         else:
             print("방이 존재하지 않습니다.")
@@ -167,12 +193,15 @@ def lobby():
         exit()
     else:
         print("잘못된 입력입니다.")
+        return
+    gameroom()
 
 
 #gameroom
-
-def join(roomID, roomPW):
-    pass
+def gameroom():
+    print('참가한 유저')
+    for i in currentRoom.userList:
+        print(f'닉네임 : {library.playerHandler.players[i].nickname}, 소지금 : {currentRoom.userMoney[i]}')
 
 
 def leave(self):
@@ -201,225 +230,6 @@ def checkTableMoney(money):
 
 def winner(ID, nickname):
     pass
-
-
-
-
-def HandRankingReturn(handCardList, playerHandNum, playerHandPattern):
-    global CARD_PATTEN
-    global flushPattern
-    royalStraightFlushCheck = 0
-    backStraightFlushCheck = 0
-    straightFlushCheck = 0
-    fourCheck = 0
-    flushCheck = 0
-    flushList = []
-    mountainCheck = 0
-    backStraightCheck = 0
-    straightCheck = 0
-    startStraightNum = 0
-    fullHoushCheck = 0
-    tokCheck = 0
-    pairCheck = 0
-    highestNum = [0] * 13
-    highestPattern = ["C"] * 13
-
-    #-
-    #highCard 0
-    #handcardList[:13] = number
-    #handcardLust[13:] = pattern
-    for idx in range(13):
-        if handCardList[idx] >= 1:
-            if highestNum[0] == 1:
-                pass
-            else:
-                highestNum[0] = idx + 1
-
-            for idx, tempNum in enumerate(playerHandNum):
-                if highestNum[0] == tempNum:
-                    tempPattern = playerHandPattern[idx]
-                    if CARD_PATTEN.index(highestPattern[0]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[0] = tempPattern
-
-    for idx in range(13):
-        #Onepair, TwoPair 1
-        if handCardList[idx] == 2:
-            pairCheck += 1
-            if highestNum[1] == 1:
-                pass
-            else:
-                highestNum[1] = idx + 1
-
-            for idx, tempNum in enumerate(playerHandNum):
-                if highestNum[1] == tempNum:
-                    tempPattern = playerHandPattern[idx]
-                    if CARD_PATTEN.index(highestPattern[1]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[1] = tempPattern
-
-        #Three of kind 2
-        if handCardList[idx] == 3:
-            tokCheck += 1
-            if highestNum[2] == 1:
-                pass
-            else:
-                highestNum[2] = idx + 1
-
-            for idx, tempNum in enumerate(playerHandNum):
-                if highestNum[2] == tempNum:
-                    tempPattern = playerHandPattern[idx]
-
-                    if CARD_PATTEN.index(highestPattern[2]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[2] = tempPattern
-
-    #Straight 3
-    for straightNum in range(6,13):
-            if handCardList[straightNum] >= 1 and handCardList[straightNum - 1] >= 1 and handCardList[straightNum - 2] >= 1 and handCardList[straightNum - 3] >= 1 and handCardList[straightNum - 4] >= 1:
-                straightCheck += 1
-                temp = straightNum
-                if startStraightNum < temp:
-                    startStraightNum = temp
-                straightList = [startStraightNum - i for i in range(5)]
-                straightList.sort()
-                print(straightList)
-                highestNum[3] = straightList[-1]
-                for idx, tempNum in enumerate(playerHandNum):
-                    if highestNum[3] == tempNum:
-                        tempPattern = playerHandPattern[idx]
-                        if CARD_PATTEN.index(highestPattern[3]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[3] = tempPattern
-
-    #BackStraight 4
-    if handCardList[0] >= 1 and handCardList[1] >= 1 and handCardList[2] >= 1 and handCardList[3] >= 1 and handCardList[4] >= 1:
-        backStraightCheck += 1
-        highestNum[4] = 1
-        for idx, tempNum in enumerate(playerHandNum):
-                if highestNum[4] == tempNum:
-                    tempPattern = playerHandPattern[idx]
-                    if CARD_PATTEN.index(highestPattern[4]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[4] = tempPattern
-
-    #Mountain 5
-    elif handCardList[0] >= 1 and handCardList[9] >= 1 and handCardList[10] >= 1 and handCardList[11] >= 1 and handCardList[12] >= 1 :
-        mountainCheck += 1
-        highestNum[5] = 1
-        for idx, tempNum in enumerate(playerHandNum):
-                if highestNum[5] == tempNum:
-                    tempPattern = playerHandPattern[idx]
-                    if CARD_PATTEN.index(highestPattern[5]) > CARD_PATTEN.index(tempPattern):
-                        highestPattern[5] = tempPattern
-
-
-    #Flush 6
-    for idx, cardPatten in enumerate(handCardList[13: ]):
-        if cardPatten >= 5:
-            flushCheck += 1
-            flushPattern = CARD_PATTEN[idx]
-            for idx, listPatten in enumerate(playerHandPattern):
-                if listPatten == flushPattern:
-                    flushList.append(playerHandNum[idx])
-
-            flushList.sort()
-            highestPattern[6] = flushPattern
-            if 1 in flushList :
-                highestNum[6] = 1
-            else:
-                highestNum[6] = flushList[-1]
-
-
-    #FullHouse 7
-    if (pairCheck >= 1 and tokCheck == 1) or (tokCheck >= 2):
-        fullHoushCheck+= 1
-        for idx in range(13):
-            if handCardList[idx] == 3:
-                if highestNum[7] == 1:
-                    pass
-                else:
-                    highestNum[7] = idx + 1
-
-                for idx, tempNum in enumerate(playerHandNum):
-                    if highestNum[7] == tempNum:
-                        tempPattern = playerHandPattern[idx]
-
-                        if CARD_PATTEN.index(highestPattern[7]) > CARD_PATTEN.index(tempPattern):
-                            highestPattern[7] = tempPattern
-
-    #FourCard 8
-    for idx in range(13):
-        if handCardList[idx] == 4:
-            highestPattern[8] = "S"
-            fourCheck += 1
-            if highestNum[8] == 1:
-                pass
-            else:
-                highestNum[8] = idx + 1
-
-
-    #StraightFlush 9
-    if straightCheck >= 1 and flushCheck >= 1:
-        if straightList == flushList:
-            highestNum[9] = int(straightList[-1])
-            highestPattern[9] = flushPattern
-            straightFlushCheck += 1
-
-    #backStraightFlush
-    if backStraightCheck >= 1 and flushCheck >= 1:
-        if [1, 2, 3, 4, 5] == flushList:
-            highestNum[10] = 1
-            highestPattern[10] = flushPattern
-            backStraightFlushCheck += 1
-
-    #royalStraightFlush
-    if mountainCheck >= 1 and flushCheck >= 1:
-        if [1, 10, 11, 12, 13] == flushList:
-            highestNum[11] = 1
-            highestPattern[11] = flushPattern
-            royalStraightFlushCheck += 1
-
-
-
-
-#----------------------------------------------------------#
-
-    #return ["랭크", "하이카드", "무늬"]
-
-    if royalStraightFlushCheck >= 1:
-        return ["RoyalStraightFlush", highestNum[11], highestPattern[11]]
-
-    elif backStraightFlushCheck>= 1:
-        return ["backStraightFlush", highestNum[10], highestPattern[10]]
-
-    elif straightFlushCheck>= 1:
-        return ["StraightFlush", highestNum[9], highestPattern[9]]
-
-    elif fourCheck >= 1: #FourCard
-        return ["FourCard", highestNum[8], highestPattern[8]]
-
-    elif fullHoushCheck >= 1:#FullHouse
-        return ["FullHouse", highestNum[7], highestPattern[7]]
-
-    elif flushCheck >= 1: #Flush
-        return ["Flush", highestNum[6], highestPattern[6]]
-
-    elif mountainCheck >= 1: #mountain
-        return ["mountain", highestNum[5], highestPattern[5]]
-
-    elif backStraightCheck >= 1: #backstraight
-        return ["backStraight", highestNum[4], highestPattern[4]]
-
-    elif straightCheck >= 1: #straight
-        return ["Straight", highestNum[3], highestPattern[3]]
-
-    elif tokCheck == 1: #Three of Kind
-        return ["Three of kind(Triple)", highestNum[2], highestPattern[2]]
-
-    elif pairCheck >= 2:#TwoPair
-        return ["TwoPair", highestNum[1], highestPattern[1]]
-
-    elif pairCheck == 1:#OnePair
-        return ["OnePair", highestNum[1], highestPattern[1]]
-
-    else: #HighCard
-        return ["HighCard", highestNum[0], highestPattern[0]]
 
 
 def number_to_card(number):
