@@ -1,5 +1,3 @@
-import threading
-import socket
 import time
 import random
 
@@ -32,71 +30,10 @@ class Player:
 class PlayerHandler:
     def __init__(self):
         self.players = dict()
-    def send_message_to_players(self):
-        while True:
-            for i in self.players:
-                if len(i.messageQueue) > 0:
-                    i.socket.send(i.messageQueue.pop(0))
-            time.sleep(0.05)
-    def enqueue_message(self, destinationID, message):
-        if destinationID in self.players.keys():
-            self.players[destinationID].messageQueue.append(message)
-            return True
-        else:
-            return False
-    def register(self, nickname, socket):
-        newID = random.randint(1, MAX_RANGE)
-        while newID in self.players.keys():
-            newID = random.randint(1, MAX_RANGE)
-        self.players[newID] = Player(nickname, socket, newID)
-        self.enqueue_message(newID, f'0 {newID} response OK registered {newID}')
-        return newID
 
 class RoomHandler:
     def __init__(self):
         self.rooms = dict()
-    def join(self, userID, roomID, roomPW):
-        message = f'0 {userID} response'
-        if playerHandler.players[userID].joinedRoom != 0:
-            playerHandler.enqueue_message(userID, message + f'joinRoomError alreadyJoined {roomID} {playerHandler.players[userID].joinedRoom}')
-        if roomID in self.rooms.keys():
-            if roomPW == self.rooms[roomID].roomPW:
-                if len(self.rooms[roomID].userList) < 4:
-                    self.rooms[roomID].userList.append(userID)
-                    playerHandler.players[userID].money = self.rooms[roomID].baseMoney
-                    playerHandler.enqueue_message(userID, message + f'joined {self.rooms[roomID].host}')
-                    for i in self.rooms[roomID].userList:
-                        tempMessage = message + f' fetch users user {i} {playerHandler.players[i].nickname} {self.rooms[roomID].userMoney[i]}'
-                        playerHandler.enqueue_message(
-                else:
-                    playerHandler.enqueue_message(userID, message + 'joinRoomError roomIsFull')
-            else:
-                playerHandler.enqueue_message(userID, message + 'joinRoomError passwordNotMatched')
-        else:
-            playerHandler.enqueue_message(userID, message + 'joinRoomError noSuchRoomID')
-    def create(self, userID, roomName, roomPW, baseBetting, baseMoney):
-        roomID = random.randint(1, MAX_RANGE)
-        while roomID in self.rooms.keys():
-           roomID = random.randint(1, MAX_RANGE)
-        self.rooms[roomID] = Room(roomID, roomName, roomPW, baseBetting, baseMoney, userID)
-        playerHandler.players[userID].joinedRoom = roomID
-        playerHandler.enqueue_message(userID, f'0 {userID} response created {roomID}')
-    def leave(self, userID, roomID):
-        if userID in self.rooms[roomID].userList:
-            self.rooms[roomID].userList.remove(userID)
-            playerHandler.enqueue_message(userID, f'0 {userID} response leaved {roomID}')
-            self.announce_leave(userID, roomID)
-            playerHandler.players[userID].joinedRoom = 0
-        else:
-            playerHandler.enqueue_message(userID, f'0 {userID} response leaveRoomError notInThisRoom')
-    def announce_leave(self, userID, roomID):
-        for aUser in self.rooms[roomID].userList:
-            playerHandler.enqueue_message(aUser, f'0 {aUser} leaved {userID}')
-    def fetch_room(self, userID):
-        playerHandler.enqueue_message(userID, f'0 {userID} response fetch rooms start')
-        for i in roomHandler.rooms:
-            playerHandler.enqueue_message(userID, f'0 {userID} response fetch rooms room {i.roomID} {i.roomName} {i.baseBetting} {i.baseMoney} {playerHandler.players[i.host].nickname}')
-        playerHandler.enqueue_message(userID, f'0 {userID} response fetch rooms end')
 
 roomHandler = RoomHandler()
 playerHandler = PlayerHandler()
@@ -322,39 +259,9 @@ class Gameplay:
         else: #HighCard
             return ["HighCard", highestNum[0], highestPattern[0]]
 
-def number_to_card(number):
-    global playerHandNum
-    global playerHandPattern
-    if number in range(1, 14): #Spade
-        this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
-        cardPatten = CARD_PATTEN[0]
-        cardNum = CARD_NUM[number - 1]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-    elif number in range(14, 27): #Heart
-        this_card = CLIENT_PATTEN[1] + CLIENT_CARD[number - 14]
-        cardPatten = CARD_PATTEN[1]
-        cardNum = CARD_NUM[number - 14]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-    elif number in range(27, 40): #Diamond
-        this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
-        cardPatten = CARD_PATTEN[2]
-        cardNum = CARD_NUM[number - 27]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-    elif number in range(40, 53): #Clover
-        this_card = CLIENT_PATTEN[3] + CLIENT_CARD[number - 40]
-        cardPatten = CARD_PATTEN[3]
-        cardNum = CARD_NUM[number - 40]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-
+'''
 class Card:
     def __init__(self, number):
         self.number = number
         self.name = number_to_card(number)
+        '''

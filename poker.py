@@ -6,9 +6,7 @@
 
 #imports
 import random
-import socket
 import time
-import threading
 import library
 
 
@@ -18,69 +16,6 @@ CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 handCardList = [int(0) for i in range(17) ]
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
-SERVER_ADDR = 'onlinepoker.hopto.org'
-
-
-class ClientSocket:
-    def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP socket
-        self.socket.connect(SERVER_ADDR, library.PORT)
-        self.sendMessageQueue = [] #any message added here will be sent to server
-        self.receiveMessageQueue = [] #any message from server will be stored here
-        self.sentMessageQueue = [] #any sent message will be stored here for further process
-        self.receivedCommands = []
-        self.receivedResponses = []
-    def listen_server_message(self): #message listener
-        while True:
-            serverMessage = self.socket.recv(2048)
-            if serverMessage == '':
-                print('server connection closed')
-                exit()
-            self.receiveMessageQueue.append(serverMessage)
-    def send_server_message(self): #message sender
-        while True:
-            if len(self.sendMessageQueue) > 0:
-                message = str(self.sendMessageQueue.pop(0))
-                self.socket.send(message.encode())
-                self.sentMessageQueue.append(message)
-            time.sleep(0.1)
-    def sort_received_message(self):
-        while True:
-            for i in self.receiveMessageQueue:
-                if i.split()[2] == 'response':
-                    self.receivedResponses.append(i)
-                else:
-                    self.receivedCommands.append(i)
-                self.receiveMessageQueue.remove(i)
-            time.sleep(0.1)
-    def handle_commands(self):
-        while True:
-            #handle received commands
-            time.sleep(0.1)
-
-
-
-#start socket
-clientSocket = ClientSocket() #init socket connection
-
-#start listening from server in a different thread so that listening would go concurrently
-tempThread = threading.Thread(target=clientSocket.listen_server_message)
-tempThread.start()
-
-#start sending to server in a different thread so that sending would go concurrently
-tempThread = threading.Thread(target=clientSocket.send_server_message)
-tempThread.start()
-
-
-#send registration message and receive response
-def register(nickname):
-    clientSocket.sendMessageQueue.append(f'-1 0 register {nickname}')
-    while len(clientSocket.receiveMessageQueue) == 0:
-        time.sleep(0.1)
-    message = str(clientSocket.receiveMessageQueue.pop(0))
-    messageList = message.split()
-    assert(messageList[1] == messageList[4] and messageList[3] == 'registered') #quit if not true
-    return messageList[1]
 
 
 #init player handler
@@ -90,66 +25,8 @@ currentRoom = library.Room(0, lobby, '', 0, 0, 0)
 
 #register
 nickname = input("닉네임을 입력하세요. : ")
-thisClient = library.Player(nickname, None, register(nickname))
+thisClient = library.Player(nickname, None, 1)
 library.playerHandler.players[thisClient.playerID] = thisClient
-
-
-tempThread = threading.Thread(target=clientSocket.sort_received_message)
-tempThread.start()
-
-
-#fetch rooms
-def fetch_rooms():
-    sentMessage = f'{thisClient.playerID} 0 fetch rooms'
-    clientSocket.sendMessageQueue.append(sentMessage)
-    while f'0 {thisClient.playerID} response fetch rooms start' not in clientSocket.receivedResponses:
-        time.sleep(0.1)
-    rooms = []
-    startIndex = clientSocket.receivedResponses.index(f'0 {thisClient.playerID} response fetch rooms start')
-    clientSocket.receivedResponses.pop(startIndex)
-    while clientSocket.receiveMessageQueue[startIndex] != f'0 {thisClient.playerID} response fetch rooms end':
-        room = clientSocket.receivedResponses.pop(startIndex).split()[6:]
-        rooms.append(library.Room(room[0], room[1], None, room[2], room[3], room[4]))
-        time.sleep(0.01)
-    clientSocket.receivedResponses.pop(startIndex)
-    clientSocket.sentMessageQueue.remove(sentMessage)
-    return rooms
-
-#create room
-def create(roomName, roomPW, baseBetting, baseMoney):
-    sentMessage = f'{thisClient.playerID} 0 create {roomName} {roomPW} {baseBetting} {baseMoney}'
-    clientSocket.sendMessageQueue.append(sentMessage)
-    while True not in [i.startswith(f'0 {thisClient.playerID} response created') for i in clientSocket.receivedResponses]:
-        time.sleep(0.1)
-    #find the index of True and pop
-    for i in clientSocket.receivedResponses:
-        if i.startswith(f'0 {thisClient.playerID} response created'):
-            retval = int(i.split()[-1])
-            clientSocket.receivedResponses.remove(i)
-            clientSocket.sentMessageQueue.remove(sentMessage)
-            currentRoom.__init__(retval, roomName, roomPW, baseBetting, baseMoney, thisClient.playerID)
-            return retval
-
-#join room
-def join(roomID, roomPW, roomList):
-    sentMessage = f'{thisClient.playerID} 0 join {roomID} {roomPW}'
-    clientSocket.sendMessageQueue.append(sentMessage)
-    #add handling errors later
-    while True not in [i.startswith(f'0 {thisClient.playerID} response joined') for i in clientSocket.receivedResponses]:
-        time.sleep(0.1)
-    for i in clientSocket.receivedResponses:
-        if i.startswith(f'0 {thisClient.playerID} response joined'):
-            startIndex = clientSocket.receivedResponses.index(i)
-            clientSocket.receivedResponses.pop(startIndex)
-            roomInfo = list(filter(lambda item : item.roomID == roomID, roomList))[0]
-            currentRoom.__init__(roomID, roomInfo.roomName, roomPW, roomInfo.baseBetting, roomInfo.baseMoney, int(i.split()[-1]))
-            while clientSocket.receivedResponses[startIndex] != f'0 {thisClient.playerID} response fetch users end':
-                aUser = clientSocket.receivedResponses.pop(startIndex).split()[6:]
-                library.playerHandler.players[int(aUser[0])] = library.Player(aUser[1], None, int(aUser[0]))
-                if int(aUser[0]) != currentRoom.host:
-                    currentRoom.userList.append(int(aUser[0]))
-                currentRoom.userMoney[int(aUser[0])] = int(aUser[2])
-            currentRoom.userMoney[thisClient.playerID] = currentRoom.baseMoney
 
 
 #lobby
@@ -250,6 +127,37 @@ playerHandPattern = []#핸드의 무늬
 일단 서버와의 통신 없이.  CUI만 구현, 이후 통신이 구현 되면 필요한 부분 수정.
 '''
 
+def number_to_card(number):
+    global playerHandNum
+    global playerHandPattern
+    if number in range(1, 14): #Spade
+        this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
+        cardPatten = CARD_PATTEN[0]
+        cardNum = CARD_NUM[number - 1]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+    elif number in range(14, 27): #Heart
+        this_card = CLIENT_PATTEN[1] + CLIENT_CARD[number - 14]
+        cardPatten = CARD_PATTEN[1]
+        cardNum = CARD_NUM[number - 14]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+    elif number in range(27, 40): #Diamond
+        this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
+        cardPatten = CARD_PATTEN[2]
+        cardNum = CARD_NUM[number - 27]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+    elif number in range(40, 53): #Clover
+        this_card = CLIENT_PATTEN[3] + CLIENT_CARD[number - 40]
+        cardPatten = CARD_PATTEN[3]
+        cardNum = CARD_NUM[number - 40]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
 
 
 while True:
