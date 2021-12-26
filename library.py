@@ -65,7 +65,9 @@ class RoomHandler:
                     self.rooms[roomID].userList.append(userID)
                     playerHandler.players[userID].money = self.rooms[roomID].baseMoney
                     playerHandler.enqueue_message(userID, message + f'joined {self.rooms[roomID].host}')
-                    #announce join
+                    for i in self.rooms[roomID].userList:
+                        tempMessage = message + f' fetch users user {i} {playerHandler.players[i].nickname} {self.rooms[roomID].userMoney[i]}'
+                        playerHandler.enqueue_message(
                 else:
                     playerHandler.enqueue_message(userID, message + 'joinRoomError roomIsFull')
             else:
@@ -319,3 +321,40 @@ class Gameplay:
 
         else: #HighCard
             return ["HighCard", highestNum[0], highestPattern[0]]
+
+def number_to_card(number):
+    global playerHandNum
+    global playerHandPattern
+    if number in range(1, 14): #Spade
+        this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
+        cardPatten = CARD_PATTEN[0]
+        cardNum = CARD_NUM[number - 1]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+    elif number in range(14, 27): #Heart
+        this_card = CLIENT_PATTEN[1] + CLIENT_CARD[number - 14]
+        cardPatten = CARD_PATTEN[1]
+        cardNum = CARD_NUM[number - 14]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+    elif number in range(27, 40): #Diamond
+        this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
+        cardPatten = CARD_PATTEN[2]
+        cardNum = CARD_NUM[number - 27]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+    elif number in range(40, 53): #Clover
+        this_card = CLIENT_PATTEN[3] + CLIENT_CARD[number - 40]
+        cardPatten = CARD_PATTEN[3]
+        cardNum = CARD_NUM[number - 40]
+        playerHandNum.append(cardNum)
+        playerHandPattern.append(cardPatten)
+        return this_card
+
+class Card:
+    def __init__(self, number):
+        self.number = number
+        self.name = number_to_card(number)

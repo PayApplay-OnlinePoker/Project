@@ -155,9 +155,10 @@
                                 * hostNickname
         * users
             * end
-            * userID
-                * userNickname
-                    * userMoney
+            *user
+                * userID
+                    * userNickname
+                        * userMoney
 * register
     * nickname
 * othersCard

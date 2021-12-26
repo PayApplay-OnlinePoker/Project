@@ -233,38 +233,6 @@ def winner(ID, nickname):
     pass
 
 
-def number_to_card(number):
-    global playerHandNum
-    global playerHandPattern
-    if number in range(1, 14): #Spade
-        this_card = CLIENT_PATTEN[0] + CLIENT_CARD[number - 1]
-        cardPatten = CARD_PATTEN[0]
-        cardNum = CARD_NUM[number - 1]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-    elif number in range(14, 27): #Heart
-        this_card = CLIENT_PATTEN[1] + CLIENT_CARD[number - 14]
-        cardPatten = CARD_PATTEN[1]
-        cardNum = CARD_NUM[number - 14]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-    elif number in range(27, 40): #Diamond
-        this_card = CLIENT_PATTEN[2] + CLIENT_CARD[number - 27]
-        cardPatten = CARD_PATTEN[2]
-        cardNum = CARD_NUM[number - 27]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-    elif number in range(40, 53): #Clover
-        this_card = CLIENT_PATTEN[3] + CLIENT_CARD[number - 40]
-        cardPatten = CARD_PATTEN[3]
-        cardNum = CARD_NUM[number - 40]
-        playerHandNum.append(cardNum)
-        playerHandPattern.append(cardPatten)
-        return this_card
-
 def print_player_hand():
     global playerHand
     print("지금 가지고 계신 패는",  ','.join(playerHand) ,'입니다.')

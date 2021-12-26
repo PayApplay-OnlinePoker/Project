@@ -55,6 +55,10 @@ def listen_client_message(newConnection, newConnectionAddr):
                 elif clientCommand == 'fetch':
                     if args[0] == 'rooms':
                         library.roomHandler.fetch_room(callerID)
+                elif clientCommand == 'create':
+                    #skip defensive coding
+                    roomID = library.roomHandler.create(callerID, args[0], args[1], args[2], args[3])
+                    library.playerHandler.enqueue_message(callerID, f'0 {callerID} created {roomID}')
             elif callerID == -1:
                 if clientCommand is 'register':
                     playerID = library.playerHandler.register(args[0], newConnection)
