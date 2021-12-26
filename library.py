@@ -77,6 +77,8 @@ class RoomHandler:
         while roomID in self.rooms.keys():
            roomID = random.randint(1, MAX_RANGE)
         self.rooms[roomID] = Room(roomID, roomName, roomPW, baseBetting, baseMoney, userID)
+        playerHandler.players[userID].joinedRoom = roomID
+        playerHandler.enqueue_message(userID, f'0 {userID} response created {roomID}')
     def leave(self, userID, roomID):
         if userID in self.rooms[roomID].userList:
             self.rooms[roomID].userList.remove(userID)
