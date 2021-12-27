@@ -412,4 +412,8 @@ while (len(playerName) != 1) or nickname in playerName:
     print("승자는", highestRankUser, "입니다.")
     #이후 우승자에게 테이블 머니만큼 돈 추가.
     #userList 원상복구(Gamelist 이용)
+    cardInstance.generate_deck()
+    playerList[playerName.index(highestRankUser)].playerMoney += tableMoney
+    for i in playerList:
+        print(playerName[playerList.index(i)],"님의 현재 소지 금액은", playerList.playerMoney, "$ 입니다.")
     #반복.
