@@ -8,11 +8,12 @@
 import random
 import time
 import library
+from os import system
 
 
 #constants
 CLIENT_CARD = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
-CARD_NUM = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+CARD_NUM = [14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 CLIENT_PATTEN = ["Spade", "Heart", "Diamond", "Clover"]
 CARD_PATTEN = ["S", "H" , "D" ,"C"]
 handCardList = [int(0) for i in range(17) ]
@@ -90,9 +91,13 @@ def compareRank(rankList):
                 if rankList[highestRankIdx][1][1] < rankList[i][1][1]:
                     if rankList[highestRankIdx][1][1] != 1:
                         highestRankIdx = i
+                    else:
+                        pass
                 elif rankList[highestRankIdx][1][1] == rankList[i][1][1]:
                     if CARD_PATTEN.index(rankList[highestRankIdx][1][2]) > CARD_PATTEN.index(rankList[i][1][2]):
                         highestRankIdx = i
+                    else:
+                        pass
         return highestRankIdx
 
 def computer_betting(user, First):
@@ -211,7 +216,7 @@ GameName = ["Com1", "Com2", "com3" ]
 while (len(playerName) != 1) or nickname in playerName:
     playerList = [library.Player() for i in range(4)]
     playerName = ["Com1", "Com2", "com3"]
-
+    system('clear')
     if nickname == "NEVERNEVERSETHISNICKNAME":
         print('---------------')
         nickname = input("닉네임을 입력하세요. : ")
@@ -234,12 +239,14 @@ while (len(playerName) != 1) or nickname in playerName:
                 baseBetting = int(input("(1~10사이 숫자를 입력하세요.): "))
         elif joinOrCreate == 2:
             print("게임을 종료합니다.")
+            system('clear')
             exit()
         else:
             print("잘못된 입력입니다.")
 
     else:
         playerName.insert(0, nickname)
+        system('clear')
         print("게임을 시작합니다.")
 
     for player in playerList:
@@ -301,7 +308,8 @@ while (len(playerName) != 1) or nickname in playerName:
     for player in playerList:
             print_open_card(player.openCardList,playerName[playerList.index(player)])
 
-    inputWating = input("계속하시려면 (enter)를 눌러주세요...") system('clear')
+    inputWating = input("계속하시려면 (enter)를 눌러주세요...")
+    system('clear')
 
 
     #오픈 카드 3장 주기.
@@ -329,7 +337,8 @@ while (len(playerName) != 1) or nickname in playerName:
             for player in betters:
                 print_open_card(player.openCardList,bettersName[betters.index(player)])
 
-        inputWating = input("계속하시려면 (enter)를 눌러주세요...") system('clear')
+        inputWating = input("계속하시려면 (enter)를 눌러주세요...")
+        system('clear')
 
 
     #---------------------베팅----------------------------------------
@@ -356,7 +365,8 @@ while (len(playerName) != 1) or nickname in playerName:
                 playerBetting = computer_betting(firstBettingUser,True)#컴퓨터 베팅 알고리즘.
                 tableMoney += betting(playerBetting, betters[bettersName.index(highestRankUser)], tableMoney)
 
-            inputWating = input("계속하시려면 (enter)를 눌러주세요...") system('clear')
+            inputWating = input("계속하시려면 (enter)를 눌러주세요...")
+            system('clear')
 
 
             #후 베팅
@@ -381,7 +391,8 @@ while (len(playerName) != 1) or nickname in playerName:
                         playerBetting = computer_betting(betters[bettersName.index(BettingUser)], False)#컴퓨터 베팅 알고리즘.
                         tableMoney += betting(playerBetting, betters[bettersName.index(BettingUser)], tableMoney)
 
-        inputWating = input("계속하시려면 (enter)를 눌러주세요...") system('clear')
+        inputWating = input("계속하시려면 (enter)를 눌러주세요...")
+        system('clear')
 
         rankList = []
         beforeCredit = 0
@@ -416,6 +427,6 @@ while (len(playerName) != 1) or nickname in playerName:
     if QuestionGame == "1":
         exit()
     else:
-        pass
+        tableMoney = 0
 
     #반복.
