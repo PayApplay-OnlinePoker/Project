@@ -121,8 +121,8 @@ def computer_betting(user, First):
 def betting(selectMenu, user, tableMoney, call):
     global beforeBetting
     global beforeAllinCredit
-    global playerList
-    global playerName
+    global betters
+    global bettersName
     global foldedList
     bettingMoney = 0
 
@@ -166,7 +166,7 @@ def betting(selectMenu, user, tableMoney, call):
             return bettingMoney
         else:
             return betting(5, user, tableMoney, False)
-        
+
     elif selectMenu == 5: #Allin
         beforeBetting = 5
         beforeAllinCredit = user.money
@@ -191,8 +191,8 @@ def betting(selectMenu, user, tableMoney, call):
 
     else: #Fold
         print("폴드입니다!")
-        del playerName[playerList.index(user)]
-        playerList.remove(user)
+        del bettersName[betters.index(user)]
+        betters.remove(user)
         return bettingMoney
 
 
@@ -235,7 +235,7 @@ while (len(playerName) != 1) or nickname in playerName:
             exit()
         else:
             print("잘못된 입력입니다.")
-            
+
     else:
         playerName.insert(0, nickname)
         print("게임을 시작합니다.")
@@ -246,7 +246,7 @@ while (len(playerName) != 1) or nickname in playerName:
         for count in range(4):
             player.playerHand.append(number_to_card(cardInstance.card_draw(),player.playerHandNum, player.playerHandPattern))
         print_player_hand(player.playerHand,playerName[playerList.index(player)])
-        
+
     #카드 한장 버리기
     print("1:" + playerList[playerName.index(nickname)].playerHand[0], "2:" + playerList[playerName.index(nickname)].playerHand[1], "3:" + playerList[playerName.index(nickname)].playerHand[2], "4:" + playerList[playerName.index(nickname)].playerHand[3])
     removeCard = int(input("버릴 카드를 선택해주세요. : "))
@@ -267,7 +267,7 @@ while (len(playerName) != 1) or nickname in playerName:
         makeHandCard(player.handCardList, player.playerHandNum, player.playerHandPattern)
         player.playerHandRanking = cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern)
         print(playerName[playerList.index(player)], "님의 패는", cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern), "입니다.")
-        
+
 
 
 
@@ -299,11 +299,11 @@ while (len(playerName) != 1) or nickname in playerName:
         computer.playerHand[openCard -1] = computer.playerHand[openCard - 1] + "(open)"
 
     print_player_hand(playerList[playerName.index(nickname)].playerHand,playerName[0])
-    inputWating = input   
+    inputWating = input
 
     for player in playerList:
             print_open_card(player.openCardList,playerName[playerList.index(player)])
-            
+
 
     #오픈 카드 3장 주기.
     for playTurn in range(4, 7):
@@ -326,17 +326,18 @@ while (len(playerName) != 1) or nickname in playerName:
 
             for player in playerList:
                 print_open_card(player.openCardList,playerName[playerList.index(player)])
-            
 
+        betters = playerList[:]
+        bettersName = playerName[:]
 
     #---------------------베팅----------------------------------------
         print(rankList)
-        if len(playerName) <= 1:
-            highestRankUser = playerName[0]
+        if len(bettersName) <= 1:
+            highestRankUser = bettersName[0]
         else:
             highestRankUser = rankList[compareRank(rankList)][0]
             print(highestRankUser)
-            firstBettingUser = playerList[playerName.index(highestRankUser)]
+            firstBettingUser = betters[bettersName.index(highestRankUser)]
 
             print("tablemoney = ", tableMoney)
             if highestRankUser == nickname:
@@ -344,41 +345,41 @@ while (len(playerName) != 1) or nickname in playerName:
                 print("               현재 플레이어의 소유 머니 :", playerList[playerName.index(highestRankUser)].money)
                 playerBetting = int(input("1.check, 3.half, 4.quarter, 5.allIn, 6(or Other).fold :"))
                 if playerBetting == 2:
-                    tableMoney += betting(6, playerList[playerName.index(highestRankUser)], tableMoney, False)
-                    
+                    tableMoney += betting(6, betters[bettersName.index(highestRankUser)], tableMoney, False)
+
                 else:
-                    tableMoney += betting(playerBetting, playerList[playerName.index(highestRankUser)], tableMoney, False)
-                    
+                    tableMoney += betting(playerBetting, betters[bettersName.index(highestRankUser)], tableMoney, False)
+
             #컴퓨터가 선일때
             else:
                 print(highestRankUser, "의 베팅 턴입니다.")
                 playerBetting = computer_betting(firstBettingUser,True)#컴퓨터 베팅 알고리즘.
-                tableMoney += betting(playerBetting, playerList[playerName.index(highestRankUser)], tableMoney, False)
-                
+                tableMoney += betting(playerBetting, betters[bettersName.index(highestRankUser)], tableMoney, False)
+
 
 
             #후 베팅
-        if len(playerName) <= 1:
-            highestRankUser = playerName[0]
+        if len(bettersName) <= 1:
+            highestRankUser = bettersName[0]
         else:
-            for BettingUser in playerName:
+            for BettingUser in bettersName:
                 if BettingUser != highestRankUser:
                     print("tablemoney = ", tableMoney)
                     if BettingUser == nickname:
                         print("베팅을 선택해주세요.", end = '')
-                        print("               현재 플레이어의 소유 머니 :", playerList[playerName.index(BettingUser)].money)
+                        print("               현재 플레이어의 소유 머니 :", betters[bettersName.index(BettingUser)].money)
                         playerBetting = int(input("2.call, 3.half, 4.quarter, 5.allIn, 6(or Other).fold :"))
                         if playerBetting == 1:
-                            tableMoney += betting(6, playerList[playerName.index(BettingUser)], tableMoney, False)
-                            
+                            tableMoney += betting(6, betters[bettersName.index(BettingUser)], tableMoney, False)
+
                         else:
-                            tableMoney += betting(playerBetting, playerList[playerName.index(BettingUser)], tableMoney, False)
-                            
+                            tableMoney += betting(playerBetting, betters[bettersName.index(BettingUser)], tableMoney, False)
+
                     else:
                         print(BettingUser, "의 베팅 턴입니다.")
-                        playerBetting = computer_betting(playerList[playerName.index(BettingUser)], False)#컴퓨터 베팅 알고리즘.
-                        tableMoney += betting(playerBetting, playerList[playerName.index(BettingUser)], tableMoney, False)
-                        
+                        playerBetting = computer_betting(betters[bettersName.index(BettingUser)], False)#컴퓨터 베팅 알고리즘.
+                        tableMoney += betting(playerBetting, betters[bettersName.index(BettingUser)], tableMoney, False)
+
 
         rankList = []
         #-----------------------------------------------------------
@@ -389,14 +390,14 @@ while (len(playerName) != 1) or nickname in playerName:
     for player in playerList:
         player.playerHand.append(number_to_card(cardInstance.card_draw(),player.playerHandNum, player.playerHandPattern))
         print_player_hand(player.playerHand, playerName[playerList.index(player)])
-        
+
         rankList.append([playerName[playerList.index(player)],cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern)])
         player.playerHandRanking = cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern)
         print(playerName[playerList.index(player)], "님의 패는",cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern), "입니다.")
-        
+
         for player in playerList:
             print_open_card(player.openCardList,playerName[playerList.index(player)])
-            
+
 
         player.handCardList_Clear()
         makeHandCard(player.handCardList, player.playerHandNum, player.playerHandPattern)
