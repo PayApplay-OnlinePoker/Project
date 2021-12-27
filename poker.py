@@ -21,7 +21,7 @@ RANK = ["High Card","One Pair","Two Pair","Three of kind","Straight","Back Strai
 rankList = []
 foldedList = []
 beforeBetting = 0
-beforeAllinCredit = 0
+beforeCredit = 0
 #High Card(Top)->One pair->Two pair->Three of kind(Triple)->Straight->Back Straight->Mountain->Flush->Full House->Four cards->Straight Flush->Back Straight Flush->Royal Straight Flush
 
 def print_player_hand(playerHand, Name):
@@ -120,7 +120,7 @@ def computer_betting(user, First):
 
 def betting(selectMenu, user, tableMoney, call):
     global beforeBetting
-    global beforeAllinCredit
+    global beforeCredit
     global betters
     global bettersName
     global foldedList
@@ -153,7 +153,7 @@ def betting(selectMenu, user, tableMoney, call):
             print(bettingMoney, "$ 베팅했습니다")
             return bettingMoney
         else:
-            return betting(5, user, tableMoney, False)
+            return betting(-1, user, tableMoney, False)
 
     elif selectMenu == 4: #quarter
         beforeBetting = 4
@@ -165,27 +165,27 @@ def betting(selectMenu, user, tableMoney, call):
             print(bettingMoney, "$ 베팅했습니다")
             return bettingMoney
         else:
-            return betting(5, user, tableMoney, False)
+            return betting(-1, user, tableMoney, False)
 
     elif selectMenu == 5: #Allin
         beforeBetting = 5
-        beforeAllinCredit = user.money
-        user.money -= beforeAllinCredit
-        bettingMoney = beforeAllinCredit
-        print(beforeAllinCredit, "$ 베팅했습니다")
+        beforeCredit = user.money
+        user.money -= beforeCredit
+        bettingMoney = beforeCredit
+        print(beforeCredit, "$ 베팅했습니다")
         print("올인입니다!")
         return bettingMoney
     elif selectMenu == -1: #Allin on by betting
-        if beforeAllinCredit >= user.money:
-            beforeAllinCredit = user.money
-            user.money -= beforeAllinCredit
-            bettingMoney = beforeAllinCredit
-            print(beforeAllinCredit, "$ 베팅했습니다")
+        if beforeCredit >= user.money:
+            beforeCredit = user.money
+            user.money -= beforeCredit
+            bettingMoney = beforeCredit
+            print(beforeCredit, "$ 베팅했습니다")
             print("올인입니다!")
         else:
-            user.money -= beforeAllinCredit
-            bettingMoney = beforeAllinCredit
-            print(beforeAllinCredit, "$ 베팅했습니다")
+            user.money -= beforeCredit
+            bettingMoney = beforeCredit
+            print(beforeCredit, "$ 베팅했습니다")
         return bettingMoney
 
 
@@ -260,16 +260,12 @@ while (len(playerName) != 1) or nickname in playerName:
         del computer.playerHandNum[removeCard - 1]
         del computer.playerHandPattern[removeCard - 1]
 
-
     #현재 패 족보 계산.
     for player in playerList:
         player.handCardList_Clear()
         makeHandCard(player.handCardList, player.playerHandNum, player.playerHandPattern)
         player.playerHandRanking = cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern)
         print(playerName[playerList.index(player)], "님의 패는", cardInstance.calculate_ranking(player.handCardList, player.playerHandNum, player.playerHandPattern), "입니다.")
-
-
-
 
     #카드 한장 오픈하기
     print("1:" + playerList[playerName.index(nickname)].playerHand[0], "2:" + playerList[playerName.index(nickname)].playerHand[1], "3:" + playerList[playerName.index(nickname)].playerHand[2])
@@ -415,5 +411,5 @@ while (len(playerName) != 1) or nickname in playerName:
     cardInstance.generate_deck()
     playerList[playerName.index(highestRankUser)].playerMoney += tableMoney
     for i in playerList:
-        print(playerName[playerList.index(i)],"님의 현재 소지 금액은", playerList.playerMoney, "$ 입니다.")
+        print(playerName[playerList.index(i)],"님의 현재 소지 금액은", i.playerMoney, "$ 입니다.")
     #반복.
